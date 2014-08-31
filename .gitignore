@@ -172,3 +172,7 @@ UpgradeLog*.htm
 
 # Microsoft Fakes
 FakesAssemblies/
+
+# Build stuff with FAKE
+/output
+/src/Twainsoft.PagedCollectionView.sln.ide
