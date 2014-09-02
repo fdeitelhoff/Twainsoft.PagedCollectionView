@@ -30,6 +30,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FluentAssertions">
+      <HintPath>..\packages\FluentAssertions.3.1.229\lib\net45\FluentAssertions.dll</HintPath>
+    </Reference>
+    <Reference Include="FluentAssertions.Core">
+      <HintPath>..\packages\FluentAssertions.3.1.229\lib\net45\FluentAssertions.Core.dll</HintPath>
+    </Reference>
     <Reference Include="Machine.Specifications">
       <HintPath>..\packages\Machine.Specifications.0.8.3\lib\net45\Machine.Specifications.dll</HintPath>
     </Reference>
