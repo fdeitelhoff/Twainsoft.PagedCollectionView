@@ -4,7 +4,7 @@ using Machine.Specifications;
 
 namespace Twainsoft.PagedCollectionView.Tests
 {
-    [Subject(typeof(Data.PagedCollectionView))]
+    [Subject(typeof(Data.PagedCollectionView), "Creating")]
     public class When_a_new_paged_collection_view_is_filled_with_data
     {
         static Data.PagedCollectionView result;

@@ -52,7 +52,8 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PagedCollectionViewTests.cs" />
+    <Compile Include="When_a_new_paged_collection_view_has_a_max_page_size.cs" />
+    <Compile Include="When_a_new_paged_collection_view_is_filled_with_data.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
