@@ -8,9 +8,9 @@ let name ="Twainsoft.PagedCollectionView"
 
 let buildAssembly = name + ".dll"
 let outputDir = "./output"
-let publishDir = outputDir + "/publish"
 let buildDir = outputDir + "/build"
 let testDir = outputDir + "/test"
+let publishDir = outputDir + "/publish"
 let version = "0.1"
 
 Target "Clean" (fun _ -> 
@@ -18,12 +18,28 @@ Target "Clean" (fun _ ->
 )
 
 Target "BuildLibrary" (fun _ ->
-    !! "./src/**/*.csproj"
+    !! "./src/Twainsoft.PagedCollectionView/**/*.csproj"
     |> MSBuildRelease buildDir "Build"
     |> Log "Building app: "
 )
 
+Target "BuildTest" (fun _ ->
+    !! "./src/Twainsoft.PagedCollectionView.Tests/**/*.csproj"
+    |> MSBuildDebug testDir "Build"
+    |> Log "Building test: "
+)
+
+Target "MSpecTest" (fun _ ->
+    !! (testDir @@ "*.Tests.dll" )
+        |> MSpec (fun p -> 
+            {p with 
+                ExcludeTags = ["LongRunning"]
+                HtmlOutputDir = testDir})
+)
+
 "Clean"
     ==> "BuildLibrary"
+    ==> "BuildTest"
+    ==> "MSpecTest"
 
-RunTargetOrDefault "BuildLibrary"
+RunTargetOrDefault "MSpecTest"
