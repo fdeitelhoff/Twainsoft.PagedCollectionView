@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Twainsoft.PagedCollectionView.Tests")]
+[assembly: AssemblyTitle("Twainsoft.PCV")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Twainsoft.PagedCollectionView.Tests")]
+[assembly: AssemblyProduct("Twainsoft.PCV")]
 [assembly: AssemblyCopyright("Copyright ©  2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -19,7 +19,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("003049e8-b482-47e6-bc90-25f37ac8b392")]
+[assembly: Guid("a4b2ffd5-86f2-4cdb-9667-20a2a2617dac")]
 
 // Version information for an assembly consists of the following four values:
 //

@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Twainsoft.PagedCollectionView.ComponentModel
+namespace Twainsoft.PCV.ComponentModel
 {
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.

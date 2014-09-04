@@ -14,7 +14,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Data;
 
-namespace Twainsoft.PagedCollectionView.Data
+namespace Twainsoft.PCV.Data
 {
     /// <summary>
     /// A CollectionViewGroupInternal, as created by a PagedCollectionView 
@@ -63,7 +63,7 @@ namespace Twainsoft.PagedCollectionView.Data
         internal CollectionViewGroupInternal(object name, CollectionViewGroupInternal parent)
             : base(name)
         {
-            this._parentGroup = parent;
+            _parentGroup = parent;
         }
 
         #endregion Constructors
@@ -82,7 +82,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         public override bool IsBottomLevel
         {
-            get { return this._groupBy == null; }
+            get { return _groupBy == null; }
         }
 
         #endregion  Public Properties
@@ -108,28 +108,28 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                return this._groupBy;
+                return _groupBy;
             }
 
             set
             {
-                bool oldIsBottomLevel = this.IsBottomLevel;
+                bool oldIsBottomLevel = IsBottomLevel;
 
-                if (this._groupBy != null)
+                if (_groupBy != null)
                 {
-                    ((INotifyPropertyChanged)this._groupBy).PropertyChanged -= new PropertyChangedEventHandler(this.OnGroupByChanged);
+                    ((INotifyPropertyChanged)_groupBy).PropertyChanged -= new PropertyChangedEventHandler(OnGroupByChanged);
                 }
 
-                this._groupBy = value;
+                _groupBy = value;
 
-                if (this._groupBy != null)
+                if (_groupBy != null)
                 {
-                    ((INotifyPropertyChanged)this._groupBy).PropertyChanged += new PropertyChangedEventHandler(this.OnGroupByChanged);
+                    ((INotifyPropertyChanged)_groupBy).PropertyChanged += new PropertyChangedEventHandler(OnGroupByChanged);
                 }
 
-                if (oldIsBottomLevel != this.IsBottomLevel)
+                if (oldIsBottomLevel != IsBottomLevel)
                 {
-                    this.OnPropertyChanged(new PropertyChangedEventArgs("IsBottomLevel"));
+                    OnPropertyChanged(new PropertyChangedEventArgs("IsBottomLevel"));
                 }
             }
         }
@@ -147,16 +147,16 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                if (this.ItemCount > 0 && (this.GroupBy == null || this.GroupBy.GroupNames.Count == 0))
+                if (ItemCount > 0 && (GroupBy == null || GroupBy.GroupNames.Count == 0))
                 {
                     // look for first item, child by child
                     for (int k = 0, n = Items.Count; k < n; ++k)
                     {
-                        CollectionViewGroupInternal subgroup = this.Items[k] as CollectionViewGroupInternal;
+                        CollectionViewGroupInternal subgroup = Items[k] as CollectionViewGroupInternal;
                         if (subgroup == null)
                         {
                             // child is an item - return it
-                            return this.Items[k];
+                            return Items[k];
                         }
                         else if (subgroup.ItemCount > 0)
                         {
@@ -194,7 +194,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private CollectionViewGroupInternal Parent
         {
-            get { return this._parentGroup; }
+            get { return _parentGroup; }
         }
 
         #endregion Private Properties
@@ -213,8 +213,8 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="item">Item to add</param>
         internal void Add(object item)
         {
-            this.ChangeCounts(item, +1);
-            this.ProtectedItems.Add(item);
+            ChangeCounts(item, +1);
+            ProtectedItems.Add(item);
         }
 
         /// <summary>
@@ -222,9 +222,9 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         internal void Clear()
         {
-            this.ProtectedItems.Clear();
-            this.FullCount = 1;
-            this.ProtectedItemCount = 0;
+            ProtectedItems.Clear();
+            FullCount = 1;
+            ProtectedItemCount = 0;
         }
 
         /// <summary>
@@ -262,8 +262,8 @@ namespace Twainsoft.PagedCollectionView.Data
 
                 for (index = low; index < high; ++index)
                 {
-                    CollectionViewGroupInternal subgroup = this.ProtectedItems[index] as CollectionViewGroupInternal;
-                    object seed1 = (subgroup != null) ? subgroup.SeedItem : this.ProtectedItems[index];
+                    CollectionViewGroupInternal subgroup = ProtectedItems[index] as CollectionViewGroupInternal;
+                    object seed1 = (subgroup != null) ? subgroup.SeedItem : ProtectedItems[index];
                     if (seed1 == DependencyProperty.UnsetValue)
                     {
                         continue;
@@ -304,11 +304,11 @@ namespace Twainsoft.PagedCollectionView.Data
         internal int Insert(object item, object seed, IComparer comparer)
         {
             // never insert the new item/group before the explicit subgroups
-            int low = (this.GroupBy == null) ? 0 : this.GroupBy.GroupNames.Count;
-            int index = this.FindIndex(item, seed, comparer, low, ProtectedItems.Count);
+            int low = (GroupBy == null) ? 0 : GroupBy.GroupNames.Count;
+            int index = FindIndex(item, seed, comparer, low, ProtectedItems.Count);
 
             // now insert the item
-            this.ChangeCounts(item, +1);
+            ChangeCounts(item, +1);
             ProtectedItems.Insert(index, item);
 
             return index;
@@ -322,9 +322,9 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Item at given index</returns>
         internal object LeafAt(int index)
         {
-            for (int k = 0, n = this.Items.Count; k < n; ++k)
+            for (int k = 0, n = Items.Count; k < n; ++k)
             {
-                CollectionViewGroupInternal subgroup = this.Items[k] as CollectionViewGroupInternal;
+                CollectionViewGroupInternal subgroup = Items[k] as CollectionViewGroupInternal;
                 if (subgroup != null)
                 {
                     // current item is a group - either drill in, or skip over
@@ -342,7 +342,7 @@ namespace Twainsoft.PagedCollectionView.Data
                     // current item is a leaf - see if we're done
                     if (index == 0)
                     {
-                        return this.Items[k];
+                        return Items[k];
                     }
                     else
                     {
@@ -376,7 +376,7 @@ namespace Twainsoft.PagedCollectionView.Data
                 for (int k = 0, n = group.Items.Count; k < n; ++k)
                 {
                     // if we've reached the item, move up to the next level
-                    if ((index < 0 && Object.Equals(item, group.Items[k])) ||
+                    if ((index < 0 && Equals(item, group.Items[k])) ||
                         index == k)
                     {
                         break;
@@ -418,7 +418,7 @@ namespace Twainsoft.PagedCollectionView.Data
                 else
                 {
                     // current item is a leaf - compare it directly
-                    if (Object.Equals(item, Items[k]))
+                    if (Equals(item, Items[k]))
                     {
                         return leaves;
                     }
@@ -438,9 +438,9 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         protected virtual void OnGroupByChanged()
         {
-            if (this.Parent != null)
+            if (Parent != null)
             {
-                this.Parent.OnGroupByChanged();
+                Parent.OnGroupByChanged();
             }
         }
 
@@ -453,17 +453,17 @@ namespace Twainsoft.PagedCollectionView.Data
         internal int Remove(object item, bool returnLeafIndex)
         {
             int index = -1;
-            int localIndex = this.ProtectedItems.IndexOf(item);
+            int localIndex = ProtectedItems.IndexOf(item);
 
             if (localIndex >= 0)
             {
                 if (returnLeafIndex)
                 {
-                    index = this.LeafIndexFromItem(null, localIndex);
+                    index = LeafIndexFromItem(null, localIndex);
                 }
 
-                this.ChangeCounts(item, -1);
-                this.ProtectedItems.RemoveAt(localIndex);
+                ChangeCounts(item, -1);
+                ProtectedItems.RemoveAt(localIndex);
             }
 
             return index;
@@ -492,7 +492,7 @@ namespace Twainsoft.PagedCollectionView.Data
             /// <param name="list">IList used to compare on</param>
             internal ListComparer(IList list)
             {
-                this.ResetList(list);
+                ResetList(list);
             }
 
             /// <summary>
@@ -501,7 +501,7 @@ namespace Twainsoft.PagedCollectionView.Data
             /// </summary>
             internal void Reset()
             {
-                this._index = 0;
+                _index = 0;
             }
 
             /// <summary>
@@ -512,8 +512,8 @@ namespace Twainsoft.PagedCollectionView.Data
             /// <param name="list">IList used to compare on</param>
             internal void ResetList(IList list)
             {
-                this._list = list;
-                this._index = 0;
+                _list = list;
+                _index = 0;
             }
 
             /// <summary>
@@ -525,21 +525,21 @@ namespace Twainsoft.PagedCollectionView.Data
             /// <returns>-1 if x is less than y, +1 otherwise</returns>
             public int Compare(object x, object y)
             {
-                if (Object.Equals(x, y))
+                if (Equals(x, y))
                 {
                     return 0;
                 }
 
                 // advance the index until seeing one x or y
-                int n = (this._list != null) ? this._list.Count : 0;
-                for (; this._index < n; ++this._index)
+                int n = (_list != null) ? _list.Count : 0;
+                for (; _index < n; ++_index)
                 {
-                    object z = this._list[this._index];
-                    if (Object.Equals(x, z))
+                    object z = _list[_index];
+                    if (Equals(x, z))
                     {
                         return -1;  // x occurs first, so x < y
                     }
-                    else if (Object.Equals(y, z))
+                    else if (Equals(y, z))
                     {
                         return +1;  // y occurs first, so x > y
                     }
@@ -570,7 +570,7 @@ namespace Twainsoft.PagedCollectionView.Data
             /// <param name="group">CollectionViewGroupRoot used to compare on</param>
             internal CollectionViewGroupComparer(CollectionViewGroupRoot group)
             {
-                this.ResetGroup(group);
+                ResetGroup(group);
             }
 
             /// <summary>
@@ -579,7 +579,7 @@ namespace Twainsoft.PagedCollectionView.Data
             /// </summary>
             internal void Reset()
             {
-                this._index = 0;
+                _index = 0;
             }
 
             /// <summary>
@@ -590,8 +590,8 @@ namespace Twainsoft.PagedCollectionView.Data
             /// <param name="group">CollectionViewGroupRoot used to compare on</param>
             internal void ResetGroup(CollectionViewGroupRoot group)
             {
-                this._group = group;
-                this._index = 0;
+                _group = group;
+                _index = 0;
             }
 
             /// <summary>
@@ -603,21 +603,21 @@ namespace Twainsoft.PagedCollectionView.Data
             /// <returns>-1 if x is less than y, +1 otherwise</returns>
             public int Compare(object x, object y)
             {
-                if (Object.Equals(x, y))
+                if (Equals(x, y))
                 {
                     return 0;
                 }
 
                 // advance the index until seeing one x or y
-                int n = (this._group != null) ? this._group.ItemCount : 0;
-                for (; this._index < n; ++this._index)
+                int n = (_group != null) ? _group.ItemCount : 0;
+                for (; _index < n; ++_index)
                 {
-                    object z = this._group.LeafAt(this._index);
-                    if (Object.Equals(x, z))
+                    object z = _group.LeafAt(_index);
+                    if (Equals(x, z))
                     {
                         return -1;  // x occurs first, so x < y
                     }
-                    else if (Object.Equals(y, z))
+                    else if (Equals(y, z))
                     {
                         return +1;  // y occurs first, so x > y
                     }
@@ -691,7 +691,7 @@ namespace Twainsoft.PagedCollectionView.Data
             unchecked
             {
                 // this invalidates enumerators
-                ++this._version;
+                ++_version;
             }
         }
 
@@ -700,9 +700,9 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         /// <param name="sender">CollectionViewGroupInternal whose GroupBy property changed</param>
         /// <param name="e">The args for the PropertyChanged event</param>
-        private void OnGroupByChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void OnGroupByChanged(object sender, PropertyChangedEventArgs e)
         {
-            this.OnGroupByChanged();
+            OnGroupByChanged();
         }
 
         #endregion Private Methods
@@ -732,8 +732,8 @@ namespace Twainsoft.PagedCollectionView.Data
             /// <param name="group">CollectionViewGroupInternal that uses the enumerator</param>
             public LeafEnumerator(CollectionViewGroupInternal group)
             {
-                this._group = group;
-                this.DoReset();  // don't call virtual Reset in ctor
+                _group = group;
+                DoReset();  // don't call virtual Reset in ctor
             }
 
             /// <summary>
@@ -741,10 +741,10 @@ namespace Twainsoft.PagedCollectionView.Data
             /// </summary>
             private void DoReset()
             {
-                Debug.Assert(this._group != null, "_group should have been initialized in constructor");
-                this._version = this._group._version;
-                this._index = -1;
-                this._subEnum = null;
+                Debug.Assert(_group != null, "_group should have been initialized in constructor");
+                _version = _group._version;
+                _index = -1;
+                _subEnum = null;
             }
 
             #region Implement IEnumerator
@@ -754,7 +754,7 @@ namespace Twainsoft.PagedCollectionView.Data
             /// </summary>
             void IEnumerator.Reset()
             {
-                this.DoReset();
+                DoReset();
             }
 
             /// <summary>
@@ -763,42 +763,42 @@ namespace Twainsoft.PagedCollectionView.Data
             /// <returns>Returns whether the MoveNext operation was successful</returns>
             bool IEnumerator.MoveNext()
             {
-                Debug.Assert(this._group != null, "_group should have been initialized in constructor");
+                Debug.Assert(_group != null, "_group should have been initialized in constructor");
 
                 // check for invalidated enumerator
-                if (this._group._version != this._version)
+                if (_group._version != _version)
                 {
                     throw new InvalidOperationException();
                 }
 
                 // move forward to the next leaf
-                while (this._subEnum == null || !this._subEnum.MoveNext())
+                while (_subEnum == null || !_subEnum.MoveNext())
                 {
                     // done with the current top-level item.  Move to the next one.
-                    ++this._index;
-                    if (this._index >= this._group.Items.Count)
+                    ++_index;
+                    if (_index >= _group.Items.Count)
                     {
                         return false;
                     }
 
-                    CollectionViewGroupInternal subgroup = this._group.Items[this._index] as CollectionViewGroupInternal;
+                    CollectionViewGroupInternal subgroup = _group.Items[_index] as CollectionViewGroupInternal;
                     if (subgroup == null)
                     {
                         // current item is a leaf - it's the new Current
-                        this._current = this._group.Items[this._index];
-                        this._subEnum = null;
+                        _current = _group.Items[_index];
+                        _subEnum = null;
                         return true;
                     }
                     else
                     {
                         // current item is a subgroup - get its enumerator
-                        this._subEnum = subgroup.GetLeafEnumerator();
+                        _subEnum = subgroup.GetLeafEnumerator();
                     }
                 }
 
                 // the loop terminates only when we have a subgroup enumerator
                 // positioned at the new Current item
-                this._current = this._subEnum.Current;
+                _current = _subEnum.Current;
                 return true;
             }
 
@@ -809,14 +809,14 @@ namespace Twainsoft.PagedCollectionView.Data
             {
                 get
                 {
-                    Debug.Assert(this._group != null, "_group should have been initialized in constructor");
+                    Debug.Assert(_group != null, "_group should have been initialized in constructor");
 
-                    if (this._index < 0 || this._index >= this._group.Items.Count)
+                    if (_index < 0 || _index >= _group.Items.Count)
                     {
                         throw new InvalidOperationException();
                     }
 
-                    return this._current;
+                    return _current;
                 }
             }
 

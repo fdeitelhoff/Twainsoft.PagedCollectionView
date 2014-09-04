@@ -9,7 +9,7 @@
 
 using System.ComponentModel;
 
-namespace Twainsoft.PagedCollectionView.ComponentModel
+namespace Twainsoft.PCV.ComponentModel
 {
     /// <summary>
     /// Event argument used for page index change notifications. The requested page move
@@ -24,7 +24,7 @@ namespace Twainsoft.PagedCollectionView.ComponentModel
         /// <param name="newPageIndex">Index of the requested page</param>
         public PageChangingEventArgs(int newPageIndex)
         {
-            this.NewPageIndex = newPageIndex;
+            NewPageIndex = newPageIndex;
         }
 
         /// <summary>

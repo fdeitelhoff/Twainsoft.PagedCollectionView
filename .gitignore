@@ -175,5 +175,5 @@ FakesAssemblies/
 
 # Build stuff with FAKE
 /output
-/src/Twainsoft.PagedCollectionView.sln.ide
+/src/Twainsoft.PCV.sln.ide
 /tools/FAKE

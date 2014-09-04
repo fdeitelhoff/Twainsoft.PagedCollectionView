@@ -4,7 +4,7 @@ open Fake
 
 RestorePackages()
 
-let name ="Twainsoft.PagedCollectionView"
+let name ="Twainsoft.PCV"
 
 let buildAssembly = name + ".dll"
 let outputDir = "./output"
@@ -18,13 +18,13 @@ Target "Clean" (fun _ ->
 )
 
 Target "BuildLibrary" (fun _ ->
-    !! "./src/Twainsoft.PagedCollectionView/**/*.csproj"
+    !! "./src/Twainsoft.PCV/**/*.csproj"
     |> MSBuildRelease buildDir "Build"
     |> Log "Building app: "
 )
 
 Target "BuildTest" (fun _ ->
-    !! "./src/Twainsoft.PagedCollectionView.Tests/**/*.csproj"
+    !! "./src/Twainsoft.PCV.Tests/**/*.csproj"
     |> MSBuildDebug testDir "Build"
     |> Log "Building test: "
 )

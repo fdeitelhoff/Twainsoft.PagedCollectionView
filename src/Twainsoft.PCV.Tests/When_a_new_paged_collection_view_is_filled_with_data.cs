@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
 using FluentAssertions;
 using Machine.Specifications;
+using Twainsoft.PCV.Data;
 
-namespace Twainsoft.PagedCollectionView.Tests
+namespace Twainsoft.PCV.Tests
 {
-    [Subject(typeof(Data.PagedCollectionView), "Creating")]
+    [Subject(typeof(PagedCollectionView), "Creating")]
     public class When_a_new_paged_collection_view_is_filled_with_data
     {
-        static Data.PagedCollectionView result;
+        static PagedCollectionView result;
         static IEnumerable<string> input;
             
         Establish context = () =>
@@ -16,7 +17,7 @@ namespace Twainsoft.PagedCollectionView.Tests
         };
 
         Because of = 
-            () => result = new Data.PagedCollectionView(input);
+            () => result = new PagedCollectionView(input);
 
         It should_not_be_an_empty_view =
             () => result.Count.Should().NotBe(null);

@@ -19,18 +19,18 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Data;
-using Twainsoft.PagedCollectionView.Common;
-using Twainsoft.PagedCollectionView.ComponentModel;
+using Twainsoft.PCV.Common;
+using Twainsoft.PCV.ComponentModel;
 
-namespace Twainsoft.PagedCollectionView.Data
+namespace Twainsoft.PCV.Data
 {
     /// <summary>
     /// PagedCollectionView view over an IEnumerable.
     /// </summary>
     /// <QualityBand>Preview</QualityBand>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "WPF Compatability")]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1010:CollectionsShouldImplementGenericInterface", Justification = "WPF Compatibility")]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix", Justification = "WPF Compatibility for naming")]
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable", Justification = "WPF Compatability")]
+    [SuppressMessage("Microsoft.Design", "CA1010:CollectionsShouldImplementGenericInterface", Justification = "WPF Compatibility")]
+    [SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix", Justification = "WPF Compatibility for naming")]
     public sealed class PagedCollectionView : ICollectionView, IPagedCollectionView, IEditableCollectionView, INotifyPropertyChanged
     {
         ////------------------------------------------------------
@@ -240,40 +240,40 @@ namespace Twainsoft.PagedCollectionView.Data
                 throw new ArgumentNullException("source");
             }
 
-            this._sourceCollection = source;
+            _sourceCollection = source;
 
-            this.SetFlag(CollectionViewFlags.IsDataSorted, isDataSorted);
-            this.SetFlag(CollectionViewFlags.IsDataInGroupOrder, isDataInGroupOrder);
+            SetFlag(CollectionViewFlags.IsDataSorted, isDataSorted);
+            SetFlag(CollectionViewFlags.IsDataInGroupOrder, isDataInGroupOrder);
 
-            this._temporaryGroup = new CollectionViewGroupRoot(this, isDataInGroupOrder);
-            this._group = new CollectionViewGroupRoot(this, false);
-            this._group.GroupDescriptionChanged += new EventHandler(this.OnGroupDescriptionChanged);
-            this._group.GroupDescriptions.CollectionChanged += new NotifyCollectionChangedEventHandler(this.OnGroupByChanged);
+            _temporaryGroup = new CollectionViewGroupRoot(this, isDataInGroupOrder);
+            _group = new CollectionViewGroupRoot(this, false);
+            _group.GroupDescriptionChanged += new EventHandler(OnGroupDescriptionChanged);
+            _group.GroupDescriptions.CollectionChanged += new NotifyCollectionChangedEventHandler(OnGroupByChanged);
 
-            this.CopySourceToInternalList();
-            this._trackingEnumerator = source.GetEnumerator();
+            CopySourceToInternalList();
+            _trackingEnumerator = source.GetEnumerator();
 
             // set currency
-            if (this._internalList.Count > 0)
+            if (_internalList.Count > 0)
             {
-                this.SetCurrent(this._internalList[0], 0, 1);
+                SetCurrent(_internalList[0], 0, 1);
             }
             else
             {
-                this.SetCurrent(null, -1, 0);
+                SetCurrent(null, -1, 0);
             }
 
             // Set flag for whether the collection is empty
-            this.SetFlag(CollectionViewFlags.CachedIsEmpty, this.Count == 0);
+            SetFlag(CollectionViewFlags.CachedIsEmpty, Count == 0);
 
             // If the source doesn't raise collection change events, try to
             // detect changes by polling the enumerator
-            this._pollForChanges = !(source is INotifyCollectionChanged);
+            _pollForChanges = !(source is INotifyCollectionChanged);
 
             // If we implement INotifyCollectionChanged
-            if (!this._pollForChanges)
+            if (!_pollForChanges)
             {
-                (source as INotifyCollectionChanged).CollectionChanged += new NotifyCollectionChangedEventHandler(delegate (object sender, NotifyCollectionChangedEventArgs args) { this.ProcessCollectionChanged(args); });
+                (source as INotifyCollectionChanged).CollectionChanged += new NotifyCollectionChangedEventHandler(delegate (object sender, NotifyCollectionChangedEventArgs args) { ProcessCollectionChanged(args); });
             }
         }
 
@@ -313,8 +313,8 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         event NotifyCollectionChangedEventHandler INotifyCollectionChanged.CollectionChanged
         {
-            add { this.CollectionChanged += value; }
-            remove { this.CollectionChanged -= value; }
+            add { CollectionChanged += value; }
+            remove { CollectionChanged -= value; }
         }
 
         /// <summary>
@@ -347,8 +347,8 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged
         {
-            add { this.PropertyChanged += value; }
-            remove { this.PropertyChanged -= value; }
+            add { PropertyChanged += value; }
+            remove { PropertyChanged -= value; }
         }
 
         #endregion Events
@@ -436,8 +436,8 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                return !this.IsEditingItem &&
-                    (this.SourceList != null && !this.SourceList.IsFixedSize && this.CanConstructItem);
+                return !IsEditingItem &&
+                    (SourceList != null && !SourceList.IsFixedSize && CanConstructItem);
             }
         }
 
@@ -450,7 +450,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         public bool CanCancelEdit
         {
-            get { return this._editItem is System.ComponentModel.IEditableObject; }
+            get { return _editItem is IEditableObject; }
         }
 
         /// <summary>
@@ -485,8 +485,8 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                return !this.IsEditingItem && !this.IsAddingNew &&
-                    (this.SourceList != null && !this.SourceList.IsFixedSize);
+                return !IsEditingItem && !IsAddingNew &&
+                    (SourceList != null && !SourceList.IsFixedSize);
             }
         }
 
@@ -506,37 +506,37 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                this.EnsureCollectionInSync();
-                this.VerifyRefreshNotDeferred();
+                EnsureCollectionInSync();
+                VerifyRefreshNotDeferred();
 
                 // if we have paging
-                if (this.PageSize > 0 && this.PageIndex > -1)
+                if (PageSize > 0 && PageIndex > -1)
                 {
-                    if (this.IsGrouping && !this._isUsingTemporaryGroup)
+                    if (IsGrouping && !_isUsingTemporaryGroup)
                     {
-                        return this._group.ItemCount;
+                        return _group.ItemCount;
                     }
                     else
                     {
-                        return Math.Max(0, Math.Min(this.PageSize, this.InternalCount - (this._pageSize * this.PageIndex)));
+                        return Math.Max(0, Math.Min(PageSize, InternalCount - (_pageSize * PageIndex)));
                     }
                 }
                 else
                 {
-                    if (this.IsGrouping)
+                    if (IsGrouping)
                     {
-                        if (this._isUsingTemporaryGroup)
+                        if (_isUsingTemporaryGroup)
                         {
-                            return this._temporaryGroup.ItemCount;
+                            return _temporaryGroup.ItemCount;
                         }
                         else
                         {
-                            return this._group.ItemCount;
+                            return _group.ItemCount;
                         }
                     }
                     else
                     {
-                        return this.InternalCount;
+                        return InternalCount;
                     }
                 }
             }
@@ -549,7 +549,7 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                return this._culture;
+                return _culture;
             }
 
             set
@@ -559,10 +559,10 @@ namespace Twainsoft.PagedCollectionView.Data
                     throw new ArgumentNullException("value");
                 }
 
-                if (this._culture != value)
+                if (_culture != value)
                 {
-                    this._culture = value;
-                    this.OnPropertyChanged("Culture");
+                    _culture = value;
+                    OnPropertyChanged("Culture");
                 }
             }
         }
@@ -575,17 +575,17 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                return this._newItem;
+                return _newItem;
             }
 
             private set
             {
-                if (this._newItem != value)
+                if (_newItem != value)
                 {
-                    Debug.Assert(value == null || this._newItem == null, "Old and new _newItem values are unexpectedly non null");
-                    this._newItem = value;
-                    this.OnPropertyChanged("IsAddingNew");
-                    this.OnPropertyChanged("CurrentAddItem");
+                    Debug.Assert(value == null || _newItem == null, "Old and new _newItem values are unexpectedly non null");
+                    _newItem = value;
+                    OnPropertyChanged("IsAddingNew");
+                    OnPropertyChanged("CurrentAddItem");
                 }
             }
         }
@@ -598,21 +598,21 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                return this._editItem;
+                return _editItem;
             }
 
             private set
             {
-                if (this._editItem != value)
+                if (_editItem != value)
                 {
-                    Debug.Assert(value == null || this._editItem == null, "Old and new _editItem values are unexpectedly non null");
-                    bool oldCanCancelEdit = this.CanCancelEdit;
-                    this._editItem = value;
-                    this.OnPropertyChanged("IsEditingItem");
-                    this.OnPropertyChanged("CurrentEditItem");
-                    if (oldCanCancelEdit != this.CanCancelEdit)
+                    Debug.Assert(value == null || _editItem == null, "Old and new _editItem values are unexpectedly non null");
+                    bool oldCanCancelEdit = CanCancelEdit;
+                    _editItem = value;
+                    OnPropertyChanged("IsEditingItem");
+                    OnPropertyChanged("CurrentEditItem");
+                    if (oldCanCancelEdit != CanCancelEdit)
                     {
-                        this.OnPropertyChanged("CanCancelEdit");
+                        OnPropertyChanged("CanCancelEdit");
                     }
                 }
             }
@@ -625,8 +625,8 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                this.VerifyRefreshNotDeferred();
-                return this._currentItem;
+                VerifyRefreshNotDeferred();
+                return _currentItem;
             }
         }
 
@@ -638,8 +638,8 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                this.VerifyRefreshNotDeferred();
-                return this._currentPosition;
+                VerifyRefreshNotDeferred();
+                return _currentPosition;
             }
         }
 
@@ -657,26 +657,26 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                return this._filter;
+                return _filter;
             }
 
             set
             {
-                if (this.IsAddingNew || this.IsEditingItem)
+                if (IsAddingNew || IsEditingItem)
                 {
                     throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, PagedCollectionViewResources.OperationNotAllowedDuringAddOrEdit, "Filter"));
                 }
 
-                if (!this.CanFilter)
+                if (!CanFilter)
                 {
                     throw new NotSupportedException(PagedCollectionViewResources.CannotFilter);
                 }
 
-                if (this._filter != value)
+                if (_filter != value)
                 {
-                    this._filter = value;
-                    this.RefreshOrDefer();
-                    this.OnPropertyChanged("Filter");
+                    _filter = value;
+                    RefreshOrDefer();
+                    OnPropertyChanged("Filter");
 
                     RaiseOwnPropertyChangedEvents();
                 }
@@ -690,7 +690,7 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                return this._group != null ? this._group.GroupDescriptions : null;
+                return _group != null ? _group.GroupDescriptions : null;
             }
         }
 
@@ -702,12 +702,12 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                if (!this.IsGrouping)
+                if (!IsGrouping)
                 {
                     return null;
                 }
 
-                CollectionViewGroupRoot group = this.RootGroup;
+                CollectionViewGroupRoot group = RootGroup;
                 return group != null ? group.Items : null;
             }
         }
@@ -717,7 +717,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         public bool IsAddingNew
         {
-            get { return this._newItem != null; }
+            get { return _newItem != null; }
         }
 
         /// <summary> 
@@ -728,8 +728,8 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                this.VerifyRefreshNotDeferred();
-                return this.CheckFlag(CollectionViewFlags.IsCurrentAfterLast);
+                VerifyRefreshNotDeferred();
+                return CheckFlag(CollectionViewFlags.IsCurrentAfterLast);
             }
         }
 
@@ -741,8 +741,8 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                this.VerifyRefreshNotDeferred();
-                return this.CheckFlag(CollectionViewFlags.IsCurrentBeforeFirst);
+                VerifyRefreshNotDeferred();
+                return CheckFlag(CollectionViewFlags.IsCurrentBeforeFirst);
             }
         }
 
@@ -751,7 +751,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         public bool IsEditingItem
         {
-            get { return this._editItem != null; }
+            get { return _editItem != null; }
         }
 
         /// <summary>
@@ -761,8 +761,8 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                this.EnsureCollectionInSync();
-                return this.InternalCount == 0;
+                EnsureCollectionInSync();
+                return InternalCount == 0;
             }
         }
 
@@ -773,15 +773,15 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                return this.CheckFlag(CollectionViewFlags.IsPageChanging);
+                return CheckFlag(CollectionViewFlags.IsPageChanging);
             }
 
             private set
             {
-                if (this.CheckFlag(CollectionViewFlags.IsPageChanging) != value)
+                if (CheckFlag(CollectionViewFlags.IsPageChanging) != value)
                 {
-                    this.SetFlag(CollectionViewFlags.IsPageChanging, value);
-                    this.OnPropertyChanged("IsPageChanging");
+                    SetFlag(CollectionViewFlags.IsPageChanging, value);
+                    OnPropertyChanged("IsPageChanging");
                 }
             }
         }
@@ -794,7 +794,7 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                return this.InternalList.Count;
+                return InternalList.Count;
             }
         }
 
@@ -803,7 +803,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         public bool NeedsRefresh
         {
-            get { return this.CheckFlag(CollectionViewFlags.NeedsRefresh); }
+            get { return CheckFlag(CollectionViewFlags.NeedsRefresh); }
         }
 
         /// <summary>
@@ -838,7 +838,7 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                return this._pageIndex;
+                return _pageIndex;
             }
         }
 
@@ -852,7 +852,7 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                return this._pageSize;
+                return _pageSize;
             }
             set
             {
@@ -864,32 +864,32 @@ namespace Twainsoft.PagedCollectionView.Data
                 // if the Refresh is currently deferred, cache the desired PageSize
                 // and set the flag so that once the defer is over, we can then
                 // update the PageSize.
-                if (this.IsRefreshDeferred)
+                if (IsRefreshDeferred)
                 {
                     // set cached value and flag so that we update the PageSize on EndDefer
-                    this._cachedPageSize = value;
-                    this.SetFlag(CollectionViewFlags.IsUpdatePageSizeDeferred, true);
+                    _cachedPageSize = value;
+                    SetFlag(CollectionViewFlags.IsUpdatePageSizeDeferred, true);
                     return;
                 }
 
                 // to see whether or not to fire an OnPropertyChanged
-                int oldCount = this.Count;
+                int oldCount = Count;
 
-                if (this._pageSize != value)
+                if (_pageSize != value)
                 {
                     // Remember current currency values for upcoming OnPropertyChanged notifications
-                    object oldCurrentItem = this.CurrentItem;
-                    int oldCurrentPosition = this.CurrentPosition;
-                    bool oldIsCurrentAfterLast = this.IsCurrentAfterLast;
-                    bool oldIsCurrentBeforeFirst = this.IsCurrentBeforeFirst;
+                    object oldCurrentItem = CurrentItem;
+                    int oldCurrentPosition = CurrentPosition;
+                    bool oldIsCurrentAfterLast = IsCurrentAfterLast;
+                    bool oldIsCurrentBeforeFirst = IsCurrentBeforeFirst;
 
                     // Check if there is a current edited or new item so changes can be committed first.
-                    if (this.CurrentAddItem != null || this.CurrentEditItem != null)
+                    if (CurrentAddItem != null || CurrentEditItem != null)
                     {
                         // Check with the ICollectionView.CurrentChanging listeners if it's OK to
                         // change the currency. If not, then we can't fire the event to allow them to
                         // commit their changes. So, we will not be able to change the PageSize.
-                        if (!this.OkToChangeCurrent())
+                        if (!OkToChangeCurrent())
                         {
                             throw new InvalidOperationException(PagedCollectionViewResources.ChangingPageSizeNotAllowedDuringAddOrEdit);
                         }
@@ -900,73 +900,73 @@ namespace Twainsoft.PagedCollectionView.Data
                         // The reason why we temporarily reset currency here is to give a chance to the bound
                         // controls to commit or cancel their potential edits/addition. The DataForm calls ForceEndEdit()
                         // for example as a result of changing currency.
-                        this.SetCurrentToPosition(-1);
-                        this.RaiseCurrencyChanges(true /*fireChangedEvent*/, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
+                        SetCurrentToPosition(-1);
+                        RaiseCurrencyChanges(true /*fireChangedEvent*/, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
 
                         // If the bound controls did not successfully end their potential item editing/addition, we 
                         // need to throw an exception to show that the PageSize change failed. 
-                        if (this.CurrentAddItem != null || this.CurrentEditItem != null)
+                        if (CurrentAddItem != null || CurrentEditItem != null)
                         {
                             throw new InvalidOperationException(PagedCollectionViewResources.ChangingPageSizeNotAllowedDuringAddOrEdit);
                         }
                     }
 
-                    this._pageSize = value;
-                    this.OnPropertyChanged("PageSize");
+                    _pageSize = value;
+                    OnPropertyChanged("PageSize");
 
-                    if (this._pageSize == 0)
+                    if (_pageSize == 0)
                     {
                         // update the groups for the current page
-                        this.PrepareGroups();
+                        PrepareGroups();
 
                         // if we are not paging
-                        this.MoveToPage(-1);
+                        MoveToPage(-1);
                     }
-                    else if (this._pageIndex != 0)
+                    else if (_pageIndex != 0)
                     {
-                        if (!this.CheckFlag(CollectionViewFlags.IsMoveToPageDeferred))
+                        if (!CheckFlag(CollectionViewFlags.IsMoveToPageDeferred))
                         {
                             // if the temporaryGroup was not created yet and is out of sync
                             // then create it so that we can use it as a refernce while paging.
-                            if (this.IsGrouping && this._temporaryGroup.ItemCount != this.InternalList.Count)
+                            if (IsGrouping && _temporaryGroup.ItemCount != InternalList.Count)
                             {
-                                this.PrepareTemporaryGroups();
+                                PrepareTemporaryGroups();
                             }
 
-                            this.MoveToFirstPage();
+                            MoveToFirstPage();
                         }
                     }
-                    else if (this.IsGrouping)
+                    else if (IsGrouping)
                     {
                         // if the temporaryGroup was not created yet and is out of sync
                         // then create it so that we can use it as a refernce while paging.
-                        if (this._temporaryGroup.ItemCount != this.InternalList.Count)
+                        if (_temporaryGroup.ItemCount != InternalList.Count)
                         {
                             // update the groups that get created for the
                             // entire collection as well as the current page
-                            this.PrepareTemporaryGroups();
+                            PrepareTemporaryGroups();
                         }
 
                         // update the groups for the current page
-                        this.PrepareGroupsForCurrentPage();
+                        PrepareGroupsForCurrentPage();
                     }
 
                     // if the count has changed
-                    if (this.Count != oldCount)
+                    if (Count != oldCount)
                     {
-                        this.OnPropertyChanged("Count");
+                        OnPropertyChanged("Count");
                     }
 
                     // reset currency values
-                    this.ResetCurrencyValues(oldCurrentItem, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
+                    ResetCurrencyValues(oldCurrentItem, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
 
                     // send a notification that our collection has been updated
-                    this.OnCollectionChanged(
+                    OnCollectionChanged(
                         new NotifyCollectionChangedEventArgs(
                             NotifyCollectionChangedAction.Reset));
 
                     // now raise currency changes at the end
-                    this.RaiseCurrencyChanges(false, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
+                    RaiseCurrencyChanges(false, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
                 }
             }
         }
@@ -990,12 +990,12 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                if (this._sortDescriptions == null)
+                if (_sortDescriptions == null)
                 {
-                    this.SetSortDescriptions(new SortDescriptionCollection());
+                    SetSortDescriptions(new SortDescriptionCollection());
                 }
 
-                return this._sortDescriptions;
+                return _sortDescriptions;
             }
         }
 
@@ -1004,7 +1004,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         public IEnumerable SourceCollection
         {
-            get { return this._sourceCollection; }
+            get { return _sourceCollection; }
         }
 
         /// <summary>
@@ -1014,7 +1014,7 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                return this.InternalList.Count;
+                return InternalList.Count;
             }
         }
 
@@ -1035,12 +1035,12 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                if (!this._itemConstructorIsValid)
+                if (!_itemConstructorIsValid)
                 {
-                    this.EnsureItemConstructor();
+                    EnsureItemConstructor();
                 }
 
-                return this._itemConstructor != null;
+                return _itemConstructor != null;
             }
         }
 
@@ -1050,7 +1050,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private int InternalCount
         {
-            get { return this.InternalList.Count; }
+            get { return InternalList.Count; }
         }
 
         /// <summary>
@@ -1058,7 +1058,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private IList InternalList
         {
-            get { return this._internalList; }
+            get { return _internalList; }
         }
 
         /// <summary>
@@ -1069,13 +1069,13 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                if (this.IsCurrentInView)
+                if (IsCurrentInView)
                 {
-                    return this.GetItemAt(this.CurrentPosition).Equals(this.CurrentItem);
+                    return GetItemAt(CurrentPosition).Equals(CurrentItem);
                 }
                 else
                 {
-                    return this.CurrentItem == null;
+                    return CurrentItem == null;
                 }
             }
         }
@@ -1087,11 +1087,11 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                this.VerifyRefreshNotDeferred();
+                VerifyRefreshNotDeferred();
 
                 // Calling IndexOf will check whether the specified currentItem
                 // is within the (paged) view.
-                return this.IndexOf(this.CurrentItem) >= 0;
+                return IndexOf(CurrentItem) >= 0;
             }
         }
 
@@ -1101,7 +1101,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private bool IsGrouping
         {
-            get { return this._isGrouping; }
+            get { return _isGrouping; }
         }
 
         /// <summary>
@@ -1113,7 +1113,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private bool IsRefreshDeferred
         {
-            get { return this._deferLevel > 0; }
+            get { return _deferLevel > 0; }
         }
 
         /// <summary>
@@ -1122,7 +1122,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private bool NeedToMoveToPreviousPage
         {
-            get { return (this.PageSize > 0 && this.Count == 0 && this.PageIndex != 0 && this.PageCount == this.PageIndex); }
+            get { return (PageSize > 0 && Count == 0 && PageIndex != 0 && PageCount == PageIndex); }
         }
 
         /// <summary>
@@ -1132,20 +1132,20 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                if (this.PageSize == 0)
+                if (PageSize == 0)
                 {
                     return false;
                 }
 
-                Debug.Assert(this.PageCount > 0, "Unexpected PageCount <= 0");
+                Debug.Assert(PageCount > 0, "Unexpected PageCount <= 0");
 
                 // if we have no items (PageCount==1) or there is just one page
-                if (this.PageCount == 1)
+                if (PageCount == 1)
                 {
                     return true;
                 }
 
-                return (this.PageIndex == this.PageCount - 1);
+                return (PageIndex == PageCount - 1);
             }
         }
 
@@ -1154,7 +1154,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         public int PageCount
         {
-            get { return (this._pageSize > 0) ? Math.Max(1, (int)Math.Ceiling((double)this.ItemCount / this._pageSize)) : 0; }
+            get { return (_pageSize > 0) ? Math.Max(1, (int)Math.Ceiling((double)ItemCount / _pageSize)) : 0; }
         }
 
         /// <summary>
@@ -1164,7 +1164,7 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                return this._isUsingTemporaryGroup ? this._temporaryGroup : this._group;
+                return _isUsingTemporaryGroup ? _temporaryGroup : _group;
             }
         }
 
@@ -1173,7 +1173,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private IList SourceList
         {
-            get { return this.SourceCollection as IList; }
+            get { return SourceCollection as IList; }
         }
 
         /// <summary>
@@ -1183,7 +1183,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private int Timestamp
         {
-            get { return this._timestamp; }
+            get { return _timestamp; }
         }
 
         /// <summary>
@@ -1194,7 +1194,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private bool UsesLocalArray
         {
-            get { return this.SortDescriptions.Count > 0 || this.Filter != null || this._pageSize > 0 || this.GroupDescriptions.Count > 0; }
+            get { return SortDescriptions.Count > 0 || Filter != null || _pageSize > 0 || GroupDescriptions.Count > 0; }
         }
 
         #endregion Private Properties
@@ -1214,7 +1214,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>The item at the specified index</returns>
         public object this[int index]
         {
-            get { return this.GetItemAt(index); }
+            get { return GetItemAt(index); }
         }
 
         #endregion Indexers
@@ -1235,29 +1235,29 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>The new item we are adding</returns>
         public object AddNew()
         {
-            this.EnsureCollectionInSync();
-            this.VerifyRefreshNotDeferred();
+            EnsureCollectionInSync();
+            VerifyRefreshNotDeferred();
 
-            if (this.IsEditingItem)
+            if (IsEditingItem)
             {
                 // Implicitly close a previous EditItem
-                this.CommitEdit();
+                CommitEdit();
             }
 
             // Implicitly close a previous AddNew
-            this.CommitNew();
+            CommitNew();
 
             // Checking CanAddNew will validate that we have the correct itemConstructor
-            if (!this.CanAddNew)
+            if (!CanAddNew)
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, PagedCollectionViewResources.OperationNotAllowedForView, "AddNew"));
             }
 
             object newItem = null;
 
-            if (this._itemConstructor != null)
+            if (_itemConstructor != null)
             {
-                newItem = this._itemConstructor.Invoke(null);
+                newItem = _itemConstructor.Invoke(null);
             }
 
             try
@@ -1265,52 +1265,52 @@ namespace Twainsoft.PagedCollectionView.Data
                 // temporarily disable the CollectionChanged event
                 // handler so filtering, sorting, or grouping
                 // doesn't get applied yet
-                this.SetFlag(CollectionViewFlags.ShouldProcessCollectionChanged, false);
+                SetFlag(CollectionViewFlags.ShouldProcessCollectionChanged, false);
 
-                if (this.SourceList != null)
+                if (SourceList != null)
                 {
-                    this.SourceList.Add(newItem);
+                    SourceList.Add(newItem);
                 }
             }
             finally
             {
-                this.SetFlag(CollectionViewFlags.ShouldProcessCollectionChanged, true);
+                SetFlag(CollectionViewFlags.ShouldProcessCollectionChanged, true);
             }
 
             // Modify our _trackingEnumerator so that it shows that our collection is "up to date" 
             // and will not refresh for now.
-            this._trackingEnumerator = this._sourceCollection.GetEnumerator();
+            _trackingEnumerator = _sourceCollection.GetEnumerator();
 
             int addIndex;
             int removeIndex = -1;
 
             // Adjust index based on where it should be displayed in view.
-            if (this.PageSize > 0)
+            if (PageSize > 0)
             {
                 // if the page is full (Count==PageSize), then replace last item (Count-1).
                 // otherwise, we just append at end (Count).
-                addIndex = this.Count - ((this.Count == this.PageSize) ? 1 : 0);
+                addIndex = Count - ((Count == PageSize) ? 1 : 0);
 
                 // if the page is full, remove the last item to make space for the new one.
-                removeIndex = (this.Count == this.PageSize) ? addIndex : -1;
+                removeIndex = (Count == PageSize) ? addIndex : -1;
             }
             else
             {
                 // for non-paged lists, we want to insert the item 
                 // as the last item in the view
-                addIndex = this.Count;
+                addIndex = Count;
             }
 
             // if we need to remove an item from the view due to paging
             if (removeIndex > -1)
             {
-                object removeItem = this.GetItemAt(removeIndex);
-                if (this.IsGrouping)
+                object removeItem = GetItemAt(removeIndex);
+                if (IsGrouping)
                 {
-                    this._group.RemoveFromSubgroups(removeItem);
+                    _group.RemoveFromSubgroups(removeItem);
                 }
 
-                this.OnCollectionChanged(
+                OnCollectionChanged(
                     new NotifyCollectionChangedEventArgs(
                         NotifyCollectionChangedAction.Remove,
                         removeItem,
@@ -1318,38 +1318,38 @@ namespace Twainsoft.PagedCollectionView.Data
             }
 
             // add the new item to the internal list
-            this._internalList.Insert(this.ConvertToInternalIndex(addIndex), newItem);
-            this.OnPropertyChanged("ItemCount");
+            _internalList.Insert(ConvertToInternalIndex(addIndex), newItem);
+            OnPropertyChanged("ItemCount");
 
-            object oldCurrentItem = this.CurrentItem;
-            int oldCurrentPosition = this.CurrentPosition;
-            bool oldIsCurrentAfterLast = this.IsCurrentAfterLast;
-            bool oldIsCurrentBeforeFirst = this.IsCurrentBeforeFirst;
+            object oldCurrentItem = CurrentItem;
+            int oldCurrentPosition = CurrentPosition;
+            bool oldIsCurrentAfterLast = IsCurrentAfterLast;
+            bool oldIsCurrentBeforeFirst = IsCurrentBeforeFirst;
 
-            this.AdjustCurrencyForAdd(null, addIndex);
+            AdjustCurrencyForAdd(null, addIndex);
 
-            if (this.IsGrouping)
+            if (IsGrouping)
             {
-                this._group.InsertSpecialItem(this._group.Items.Count, newItem, false);
-                if (this.PageSize > 0)
+                _group.InsertSpecialItem(_group.Items.Count, newItem, false);
+                if (PageSize > 0)
                 {
-                    this._temporaryGroup.InsertSpecialItem(this._temporaryGroup.Items.Count, newItem, false);
+                    _temporaryGroup.InsertSpecialItem(_temporaryGroup.Items.Count, newItem, false);
                 }
             }
 
             // fire collection changed.
-            this.OnCollectionChanged(
+            OnCollectionChanged(
                 new NotifyCollectionChangedEventArgs(
                     NotifyCollectionChangedAction.Add,
                     newItem,
                     addIndex));
 
-            this.RaiseCurrencyChanges(false, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
+            RaiseCurrencyChanges(false, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
 
             // set the current new item
-            this.CurrentAddItem = newItem;
+            CurrentAddItem = newItem;
 
-            this.MoveCurrentTo(newItem);
+            MoveCurrentTo(newItem);
 
             // if the new item is editable, call BeginEdit on it
             IEditableObject editableObject = newItem as IEditableObject;
@@ -1367,26 +1367,26 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         public void CancelEdit()
         {
-            if (this.IsAddingNew)
+            if (IsAddingNew)
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, PagedCollectionViewResources.OperationNotAllowedDuringTransaction, "CancelEdit", "AddNew"));
             }
-            else if (!this.CanCancelEdit)
+            else if (!CanCancelEdit)
             {
                 throw new InvalidOperationException(PagedCollectionViewResources.CancelEditNotSupported);
             }
 
-            this.VerifyRefreshNotDeferred();
+            VerifyRefreshNotDeferred();
 
-            if (this.CurrentEditItem == null)
+            if (CurrentEditItem == null)
             {
                 return;
             }
 
-            object editItem = this.CurrentEditItem;
-            this.CurrentEditItem = null;
+            object editItem = CurrentEditItem;
+            CurrentEditItem = null;
 
-            System.ComponentModel.IEditableObject ieo = editItem as System.ComponentModel.IEditableObject;
+            IEditableObject ieo = editItem as IEditableObject;
             if (ieo != null)
             {
                 ieo.CancelEdit();
@@ -1403,20 +1403,20 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         public void CancelNew()
         {
-            if (this.IsEditingItem)
+            if (IsEditingItem)
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, PagedCollectionViewResources.OperationNotAllowedDuringTransaction, "CancelNew", "EditItem"));
             }
 
-            this.VerifyRefreshNotDeferred();
+            VerifyRefreshNotDeferred();
 
-            if (this.CurrentAddItem == null)
+            if (CurrentAddItem == null)
             {
                 return;
             }
 
             // get index of item before it is removed
-            int index = this.IndexOf(this.CurrentAddItem);
+            int index = IndexOf(CurrentAddItem);
 
             // remove the new item from the underlying collection
             try
@@ -1424,87 +1424,87 @@ namespace Twainsoft.PagedCollectionView.Data
                 // temporarily disable the CollectionChanged event
                 // handler so filtering, sorting, or grouping
                 // doesn't get applied yet
-                this.SetFlag(CollectionViewFlags.ShouldProcessCollectionChanged, false);
+                SetFlag(CollectionViewFlags.ShouldProcessCollectionChanged, false);
 
-                if (this.SourceList != null)
+                if (SourceList != null)
                 {
-                    this.SourceList.Remove(this.CurrentAddItem);
+                    SourceList.Remove(CurrentAddItem);
                 }
             }
             finally
             {
-                this.SetFlag(CollectionViewFlags.ShouldProcessCollectionChanged, true);
+                SetFlag(CollectionViewFlags.ShouldProcessCollectionChanged, true);
             }
 
             // Modify our _trackingEnumerator so that it shows that our collection is "up to date" 
             // and will not refresh for now.
-            this._trackingEnumerator = this._sourceCollection.GetEnumerator();
+            _trackingEnumerator = _sourceCollection.GetEnumerator();
 
             // fire the correct events
-            if (this.CurrentAddItem != null)
+            if (CurrentAddItem != null)
             {
-                object newItem = this.EndAddNew(true);
+                object newItem = EndAddNew(true);
 
                 int addIndex = -1;
 
                 // Adjust index based on where it should be displayed in view.
-                if (this.PageSize > 0 && !this.OnLastLocalPage)
+                if (PageSize > 0 && !OnLastLocalPage)
                 {
                     // if there is paging and we are not on the last page, we need
                     // to bring in an item from the next page.
-                    addIndex = this.Count - 1;
+                    addIndex = Count - 1;
                 }
 
                 // remove the new item from the internal list 
-                this.InternalList.Remove(newItem);
+                InternalList.Remove(newItem);
 
-                if (this.IsGrouping)
+                if (IsGrouping)
                 {
-                    this._group.RemoveSpecialItem(this._group.Items.Count - 1, newItem, false);
-                    if (this.PageSize > 0)
+                    _group.RemoveSpecialItem(_group.Items.Count - 1, newItem, false);
+                    if (PageSize > 0)
                     {
-                        this._temporaryGroup.RemoveSpecialItem(this._temporaryGroup.Items.Count - 1, newItem, false);
+                        _temporaryGroup.RemoveSpecialItem(_temporaryGroup.Items.Count - 1, newItem, false);
                     }
                 }
 
-                this.OnPropertyChanged("ItemCount");
+                OnPropertyChanged("ItemCount");
 
-                object oldCurrentItem = this.CurrentItem;
-                int oldCurrentPosition = this.CurrentPosition;
-                bool oldIsCurrentAfterLast = this.IsCurrentAfterLast;
-                bool oldIsCurrentBeforeFirst = this.IsCurrentBeforeFirst;
+                object oldCurrentItem = CurrentItem;
+                int oldCurrentPosition = CurrentPosition;
+                bool oldIsCurrentAfterLast = IsCurrentAfterLast;
+                bool oldIsCurrentBeforeFirst = IsCurrentBeforeFirst;
 
-                this.AdjustCurrencyForRemove(index);
+                AdjustCurrencyForRemove(index);
 
                 // fire collection changed.
-                this.OnCollectionChanged(
+                OnCollectionChanged(
                     new NotifyCollectionChangedEventArgs(
                         NotifyCollectionChangedAction.Remove,
                         newItem,
                         index));
 
-                this.RaiseCurrencyChanges(false, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
+                RaiseCurrencyChanges(false, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
 
                 // if we need to add an item into the view due to paging
                 if (addIndex > -1)
                 {
-                    int internalIndex = this.ConvertToInternalIndex(addIndex);
+                    int internalIndex = ConvertToInternalIndex(addIndex);
                     object addItem = null;
-                    if (this.IsGrouping)
+                    if (IsGrouping)
                     {
-                        addItem = this._temporaryGroup.LeafAt(internalIndex);
-                        this._group.AddToSubgroups(addItem, false /*loading*/);
+                        addItem = _temporaryGroup.LeafAt(internalIndex);
+                        _group.AddToSubgroups(addItem, false /*loading*/);
                     }
                     else
                     {
-                        addItem = this.InternalItemAt(internalIndex);
+                        addItem = InternalItemAt(internalIndex);
                     }
 
-                    this.OnCollectionChanged(
+                    OnCollectionChanged(
                         new NotifyCollectionChangedEventArgs(
                             NotifyCollectionChangedAction.Add,
                             addItem,
-                            this.IndexOf(addItem)));
+                            IndexOf(addItem)));
                 }
             }
         }
@@ -1513,63 +1513,63 @@ namespace Twainsoft.PagedCollectionView.Data
         /// Complete the transaction started by <seealso cref="EditItem"/>.
         /// The pending changes (if any) to the item are committed.
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Handles multiple input types and scenarios")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Handles multiple input types and scenarios")]
         public void CommitEdit()
         {
-            if (this.IsAddingNew)
+            if (IsAddingNew)
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, PagedCollectionViewResources.OperationNotAllowedDuringTransaction, "CommitEdit", "AddNew"));
             }
 
-            this.VerifyRefreshNotDeferred();
+            VerifyRefreshNotDeferred();
 
-            if (this.CurrentEditItem == null)
+            if (CurrentEditItem == null)
             {
                 return;
             }
 
-            object editItem = this.CurrentEditItem;
-            this.CurrentEditItem = null;
+            object editItem = CurrentEditItem;
+            CurrentEditItem = null;
 
-            System.ComponentModel.IEditableObject ieo = editItem as System.ComponentModel.IEditableObject;
+            IEditableObject ieo = editItem as IEditableObject;
             if (ieo != null)
             {
                 ieo.EndEdit();
             }
 
-            if (this.UsesLocalArray)
+            if (UsesLocalArray)
             {
                 // first remove the item from the array so that we can insert into the correct position
-                int removeIndex = this.IndexOf(editItem);
-                int internalRemoveIndex = this.InternalIndexOf(editItem);
-                this._internalList.Remove(editItem);
+                int removeIndex = IndexOf(editItem);
+                int internalRemoveIndex = InternalIndexOf(editItem);
+                _internalList.Remove(editItem);
 
                 // check whether to restore currency to the item being edited
-                object restoreCurrencyTo = (editItem == this.CurrentItem) ? editItem : null;
+                object restoreCurrencyTo = (editItem == CurrentItem) ? editItem : null;
 
-                if (removeIndex >= 0 && this.IsGrouping)
+                if (removeIndex >= 0 && IsGrouping)
                 {
                     // we can't just call RemoveFromSubgroups, as the group name
                     // for the item may have changed during the edit.
-                    this._group.RemoveItemFromSubgroupsByExhaustiveSearch(editItem);
-                    if (this.PageSize > 0)
+                    _group.RemoveItemFromSubgroupsByExhaustiveSearch(editItem);
+                    if (PageSize > 0)
                     {
-                        this._temporaryGroup.RemoveItemFromSubgroupsByExhaustiveSearch(editItem);
+                        _temporaryGroup.RemoveItemFromSubgroupsByExhaustiveSearch(editItem);
                     }
                 }
 
-                object oldCurrentItem = this.CurrentItem;
-                int oldCurrentPosition = this.CurrentPosition;
-                bool oldIsCurrentAfterLast = this.IsCurrentAfterLast;
-                bool oldIsCurrentBeforeFirst = this.IsCurrentBeforeFirst;
+                object oldCurrentItem = CurrentItem;
+                int oldCurrentPosition = CurrentPosition;
+                bool oldIsCurrentAfterLast = IsCurrentAfterLast;
+                bool oldIsCurrentBeforeFirst = IsCurrentBeforeFirst;
 
                 // only adjust currency and fire the event if we actually removed the item
                 if (removeIndex >= 0)
                 {
-                    this.AdjustCurrencyForRemove(removeIndex);
+                    AdjustCurrencyForRemove(removeIndex);
 
                     // raise the remove event so we can next insert it into the correct place
-                    this.OnCollectionChanged(
+                    OnCollectionChanged(
                         new NotifyCollectionChangedEventArgs(
                             NotifyCollectionChangedAction.Remove,
                             editItem,
@@ -1577,48 +1577,48 @@ namespace Twainsoft.PagedCollectionView.Data
                 }
 
                 // check to see that the item will be added back in
-                bool passedFilter = this.PassesFilter(editItem);
+                bool passedFilter = PassesFilter(editItem);
 
                 // if we removed all items from the current page,
                 // move to the previous page. we do not need to 
                 // fire additional notifications, as moving the page will
                 // trigger a reset.
-                if (this.NeedToMoveToPreviousPage && !passedFilter)
+                if (NeedToMoveToPreviousPage && !passedFilter)
                 {
-                    this.MoveToPreviousPage();
+                    MoveToPreviousPage();
                     return;
                 }
 
                 // next process adding it into the correct location
-                this.ProcessInsertToCollection(editItem, internalRemoveIndex);
+                ProcessInsertToCollection(editItem, internalRemoveIndex);
 
-                int pageStartIndex = this.PageIndex * this.PageSize;
-                int nextPageStartIndex = pageStartIndex + this.PageSize;
+                int pageStartIndex = PageIndex * PageSize;
+                int nextPageStartIndex = pageStartIndex + PageSize;
 
-                if (this.IsGrouping)
+                if (IsGrouping)
                 {
                     int leafIndex = -1;
-                    if (passedFilter && this.PageSize > 0)
+                    if (passedFilter && PageSize > 0)
                     {
-                        this._temporaryGroup.AddToSubgroups(editItem, false /*loading*/);
-                        leafIndex = this._temporaryGroup.LeafIndexOf(editItem);
+                        _temporaryGroup.AddToSubgroups(editItem, false /*loading*/);
+                        leafIndex = _temporaryGroup.LeafIndexOf(editItem);
                     }
 
                     // if we are not paging, we should just be able to add the item.
                     // otherwise, we need to validate that it is within the current page.
-                    if (passedFilter && (this.PageSize == 0 ||
+                    if (passedFilter && (PageSize == 0 ||
                        (pageStartIndex <= leafIndex && nextPageStartIndex > leafIndex)))
                     {
-                        this._group.AddToSubgroups(editItem, false /*loading*/);
-                        int addIndex = this.IndexOf(editItem);
-                        this.AdjustCurrencyForEdit(restoreCurrencyTo, addIndex);
-                        this.OnCollectionChanged(
+                        _group.AddToSubgroups(editItem, false /*loading*/);
+                        int addIndex = IndexOf(editItem);
+                        AdjustCurrencyForEdit(restoreCurrencyTo, addIndex);
+                        OnCollectionChanged(
                             new NotifyCollectionChangedEventArgs(
                                 NotifyCollectionChangedAction.Add,
                                 editItem,
                                 addIndex));
                     }
-                    else if (this.PageSize > 0)
+                    else if (PageSize > 0)
                     {
                         int addIndex = -1;
                         if (passedFilter && leafIndex < pageStartIndex)
@@ -1627,20 +1627,20 @@ namespace Twainsoft.PagedCollectionView.Data
                             // in the item that would have been pushed down to this page
                             addIndex = pageStartIndex;
                         }
-                        else if (!this.OnLastLocalPage && removeIndex >= 0)
+                        else if (!OnLastLocalPage && removeIndex >= 0)
                         {
                             // if the item was added to a later page, then we need to bring in the
                             // first item from the next page
                             addIndex = nextPageStartIndex - 1;
                         }
 
-                        object addItem = this._temporaryGroup.LeafAt(addIndex);
+                        object addItem = _temporaryGroup.LeafAt(addIndex);
                         if (addItem != null)
                         {
-                            this._group.AddToSubgroups(addItem, false /*loading*/);
-                            addIndex = this.IndexOf(addItem);
-                            this.AdjustCurrencyForEdit(restoreCurrencyTo, addIndex);
-                            this.OnCollectionChanged(
+                            _group.AddToSubgroups(addItem, false /*loading*/);
+                            addIndex = IndexOf(addItem);
+                            AdjustCurrencyForEdit(restoreCurrencyTo, addIndex);
+                            OnCollectionChanged(
                                 new NotifyCollectionChangedEventArgs(
                                     NotifyCollectionChangedAction.Add,
                                     addItem,
@@ -1651,44 +1651,44 @@ namespace Twainsoft.PagedCollectionView.Data
                 else
                 {
                     // if we are still within the view
-                    int addIndex = this.IndexOf(editItem);
+                    int addIndex = IndexOf(editItem);
                     if (addIndex >= 0)
                     {
-                        this.AdjustCurrencyForEdit(restoreCurrencyTo, addIndex);
-                        this.OnCollectionChanged(
+                        AdjustCurrencyForEdit(restoreCurrencyTo, addIndex);
+                        OnCollectionChanged(
                             new NotifyCollectionChangedEventArgs(
                                 NotifyCollectionChangedAction.Add,
                                 editItem,
                                 addIndex));
                     }
-                    else if (this.PageSize > 0)
+                    else if (PageSize > 0)
                     {
                         // calculate whether the item was inserted into the previous page
-                        bool insertedToPreviousPage = this.PassesFilter(editItem) &&
-                            (this.InternalIndexOf(editItem) < this.ConvertToInternalIndex(0));
-                        addIndex = insertedToPreviousPage ? 0 : this.Count - 1;
+                        bool insertedToPreviousPage = PassesFilter(editItem) &&
+                            (InternalIndexOf(editItem) < ConvertToInternalIndex(0));
+                        addIndex = insertedToPreviousPage ? 0 : Count - 1;
 
                         // don't fire the event if we are on the last page
                         // and we don't have any items to bring in.
-                        if (insertedToPreviousPage || (!this.OnLastLocalPage && removeIndex >= 0))
+                        if (insertedToPreviousPage || (!OnLastLocalPage && removeIndex >= 0))
                         {
-                            this.AdjustCurrencyForEdit(restoreCurrencyTo, addIndex);
-                            this.OnCollectionChanged(
+                            AdjustCurrencyForEdit(restoreCurrencyTo, addIndex);
+                            OnCollectionChanged(
                                 new NotifyCollectionChangedEventArgs(
                                     NotifyCollectionChangedAction.Add,
-                                    this.GetItemAt(addIndex),
+                                    GetItemAt(addIndex),
                                     addIndex));
                         }
                     }
                 }
 
                 // now raise currency changes at the end
-                this.RaiseCurrencyChanges(true, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
+                RaiseCurrencyChanges(true, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
             }
-            else if (!this.Contains(editItem))
+            else if (!Contains(editItem))
             {
                 // if the item did not belong to the collection, add it
-                this.InternalList.Add(editItem);
+                InternalList.Add(editItem);
             }
         }
 
@@ -1697,102 +1697,102 @@ namespace Twainsoft.PagedCollectionView.Data
         /// convention in that the view's sort, filter, and paging
         /// specifications (if any) are applied to the new item.
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Handles multiple input types and scenarios")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Handles multiple input types and scenarios")]
         public void CommitNew()
         {
-            if (this.IsEditingItem)
+            if (IsEditingItem)
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, PagedCollectionViewResources.OperationNotAllowedDuringTransaction, "CommitNew", "EditItem"));
             }
 
-            this.VerifyRefreshNotDeferred();
+            VerifyRefreshNotDeferred();
 
-            if (this.CurrentAddItem == null)
+            if (CurrentAddItem == null)
             {
                 return;
             }
 
             // End the AddNew transaction
-            object newItem = this.EndAddNew(false);
+            object newItem = EndAddNew(false);
 
             // keep track of the current item
-            object previousCurrentItem = this.CurrentItem;
+            object previousCurrentItem = CurrentItem;
 
             // Modify our _trackingEnumerator so that it shows that our collection is "up to date" 
             // and will not refresh for now.
-            this._trackingEnumerator = this._sourceCollection.GetEnumerator();
+            _trackingEnumerator = _sourceCollection.GetEnumerator();
 
-            if (this.UsesLocalArray)
+            if (UsesLocalArray)
             {
                 // first remove the item from the array so that we can insert into the correct position
-                int removeIndex = this.Count - 1;
-                int internalIndex = this._internalList.IndexOf(newItem);
-                this._internalList.Remove(newItem);
+                int removeIndex = Count - 1;
+                int internalIndex = _internalList.IndexOf(newItem);
+                _internalList.Remove(newItem);
 
-                if (this.IsGrouping)
+                if (IsGrouping)
                 {
-                    this._group.RemoveSpecialItem(this._group.Items.Count - 1, newItem, false);
-                    if (this.PageSize > 0)
+                    _group.RemoveSpecialItem(_group.Items.Count - 1, newItem, false);
+                    if (PageSize > 0)
                     {
-                        this._temporaryGroup.RemoveSpecialItem(this._temporaryGroup.Items.Count - 1, newItem, false);
+                        _temporaryGroup.RemoveSpecialItem(_temporaryGroup.Items.Count - 1, newItem, false);
                     }
                 }
 
-                object oldCurrentItem = this.CurrentItem;
-                int oldCurrentPosition = this.CurrentPosition;
-                bool oldIsCurrentAfterLast = this.IsCurrentAfterLast;
-                bool oldIsCurrentBeforeFirst = this.IsCurrentBeforeFirst;
+                object oldCurrentItem = CurrentItem;
+                int oldCurrentPosition = CurrentPosition;
+                bool oldIsCurrentAfterLast = IsCurrentAfterLast;
+                bool oldIsCurrentBeforeFirst = IsCurrentBeforeFirst;
 
-                this.AdjustCurrencyForRemove(removeIndex);
+                AdjustCurrencyForRemove(removeIndex);
 
                 // raise the remove event so we can next insert it into the correct place
-                this.OnCollectionChanged(
+                OnCollectionChanged(
                     new NotifyCollectionChangedEventArgs(
                         NotifyCollectionChangedAction.Remove,
                         newItem,
                         removeIndex));
 
                 // check to see that the item will be added back in
-                bool passedFilter = this.PassesFilter(newItem);
+                bool passedFilter = PassesFilter(newItem);
 
                 // next process adding it into the correct location
-                this.ProcessInsertToCollection(newItem, internalIndex);
+                ProcessInsertToCollection(newItem, internalIndex);
 
-                int pageStartIndex = this.PageIndex * this.PageSize;
-                int nextPageStartIndex = pageStartIndex + this.PageSize;
+                int pageStartIndex = PageIndex * PageSize;
+                int nextPageStartIndex = pageStartIndex + PageSize;
 
-                if (this.IsGrouping)
+                if (IsGrouping)
                 {
                     int leafIndex = -1;
-                    if (passedFilter && this.PageSize > 0)
+                    if (passedFilter && PageSize > 0)
                     {
-                        this._temporaryGroup.AddToSubgroups(newItem, false /*loading*/);
-                        leafIndex = this._temporaryGroup.LeafIndexOf(newItem);
+                        _temporaryGroup.AddToSubgroups(newItem, false /*loading*/);
+                        leafIndex = _temporaryGroup.LeafIndexOf(newItem);
                     }
 
                     // if we are not paging, we should just be able to add the item.
                     // otherwise, we need to validate that it is within the current page.
-                    if (passedFilter && (this.PageSize == 0 ||
+                    if (passedFilter && (PageSize == 0 ||
                        (pageStartIndex <= leafIndex && nextPageStartIndex > leafIndex)))
                     {
-                        this._group.AddToSubgroups(newItem, false /*loading*/);
-                        int addIndex = this.IndexOf(newItem);
+                        _group.AddToSubgroups(newItem, false /*loading*/);
+                        int addIndex = IndexOf(newItem);
 
                         // adjust currency to either the previous current item if possible
                         // or to the item at the end of the list where the new item was.
                         if (previousCurrentItem != null)
                         {
-                            if (this.Contains(previousCurrentItem))
+                            if (Contains(previousCurrentItem))
                             {
-                                this.AdjustCurrencyForAdd(previousCurrentItem, addIndex);
+                                AdjustCurrencyForAdd(previousCurrentItem, addIndex);
                             }
                             else
                             {
-                                this.AdjustCurrencyForAdd(this.GetItemAt(this.Count - 1), addIndex);
+                                AdjustCurrencyForAdd(GetItemAt(Count - 1), addIndex);
                             }
                         }
 
-                        this.OnCollectionChanged(
+                        OnCollectionChanged(
                             new NotifyCollectionChangedEventArgs(
                                 NotifyCollectionChangedAction.Add,
                                 newItem,
@@ -1800,11 +1800,11 @@ namespace Twainsoft.PagedCollectionView.Data
                     }
                     else
                     {
-                        if (!passedFilter && (this.PageSize == 0 || this.OnLastLocalPage))
+                        if (!passedFilter && (PageSize == 0 || OnLastLocalPage))
                         {
-                            this.AdjustCurrencyForRemove(removeIndex);
+                            AdjustCurrencyForRemove(removeIndex);
                         }
-                        else if (this.PageSize > 0)
+                        else if (PageSize > 0)
                         {
                             int addIndex = -1;
                             if (passedFilter && leafIndex < pageStartIndex)
@@ -1813,34 +1813,34 @@ namespace Twainsoft.PagedCollectionView.Data
                                 // in the item that would have been pushed down to this page
                                 addIndex = pageStartIndex;
                             }
-                            else if (!this.OnLastLocalPage)
+                            else if (!OnLastLocalPage)
                             {
                                 // if the item was added to a later page, then we need to bring in the
                                 // first item from the next page
                                 addIndex = nextPageStartIndex - 1;
                             }
 
-                            object addItem = this._temporaryGroup.LeafAt(addIndex);
+                            object addItem = _temporaryGroup.LeafAt(addIndex);
                             if (addItem != null)
                             {
-                                this._group.AddToSubgroups(addItem, false /*loading*/);
-                                addIndex = this.IndexOf(addItem);
+                                _group.AddToSubgroups(addItem, false /*loading*/);
+                                addIndex = IndexOf(addItem);
 
                                 // adjust currency to either the previous current item if possible
                                 // or to the item at the end of the list where the new item was.
                                 if (previousCurrentItem != null)
                                 {
-                                    if (this.Contains(previousCurrentItem))
+                                    if (Contains(previousCurrentItem))
                                     {
-                                        this.AdjustCurrencyForAdd(previousCurrentItem, addIndex);
+                                        AdjustCurrencyForAdd(previousCurrentItem, addIndex);
                                     }
                                     else
                                     {
-                                        this.AdjustCurrencyForAdd(this.GetItemAt(this.Count - 1), addIndex);
+                                        AdjustCurrencyForAdd(GetItemAt(Count - 1), addIndex);
                                     }
                                 }
 
-                                this.OnCollectionChanged(
+                                OnCollectionChanged(
                                     new NotifyCollectionChangedEventArgs(
                                         NotifyCollectionChangedAction.Add,
                                         addItem,
@@ -1852,11 +1852,11 @@ namespace Twainsoft.PagedCollectionView.Data
                 else
                 {
                     // if we are still within the view
-                    int addIndex = this.IndexOf(newItem);
+                    int addIndex = IndexOf(newItem);
                     if (addIndex >= 0)
                     {
-                        this.AdjustCurrencyForAdd(newItem, addIndex);
-                        this.OnCollectionChanged(
+                        AdjustCurrencyForAdd(newItem, addIndex);
+                        OnCollectionChanged(
                             new NotifyCollectionChangedEventArgs(
                                 NotifyCollectionChangedAction.Add,
                                 newItem,
@@ -1864,24 +1864,24 @@ namespace Twainsoft.PagedCollectionView.Data
                     }
                     else
                     {
-                        if (!passedFilter && (this.PageSize == 0 || this.OnLastLocalPage))
+                        if (!passedFilter && (PageSize == 0 || OnLastLocalPage))
                         {
-                            this.AdjustCurrencyForRemove(removeIndex);
+                            AdjustCurrencyForRemove(removeIndex);
                         }
-                        else if (this.PageSize > 0)
+                        else if (PageSize > 0)
                         {
-                            bool insertedToPreviousPage = this.InternalIndexOf(newItem) < this.ConvertToInternalIndex(0);
-                            addIndex = insertedToPreviousPage ? 0 : this.Count - 1;
+                            bool insertedToPreviousPage = InternalIndexOf(newItem) < ConvertToInternalIndex(0);
+                            addIndex = insertedToPreviousPage ? 0 : Count - 1;
 
                             // don't fire the event if we are on the last page
                             // and we don't have any items to bring in.
-                            if (insertedToPreviousPage || !this.OnLastLocalPage)
+                            if (insertedToPreviousPage || !OnLastLocalPage)
                             {
-                                this.AdjustCurrencyForAdd(null, addIndex);
-                                this.OnCollectionChanged(
+                                AdjustCurrencyForAdd(null, addIndex);
+                                OnCollectionChanged(
                                     new NotifyCollectionChangedEventArgs(
                                         NotifyCollectionChangedAction.Add,
-                                        this.GetItemAt(addIndex),
+                                        GetItemAt(addIndex),
                                         addIndex));
                             }
                         }
@@ -1891,7 +1891,7 @@ namespace Twainsoft.PagedCollectionView.Data
                 // we want to fire the current changed event, even if we kept
                 // the same current item and position, since the item was
                 // removed/added back to the collection
-                this.RaiseCurrencyChanges(true, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
+                RaiseCurrencyChanges(true, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
             }
         }
 
@@ -1905,9 +1905,9 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Boolean value of whether or not the collection contains the item</returns>
         public bool Contains(object item)
         {
-            this.EnsureCollectionInSync();
-            this.VerifyRefreshNotDeferred();
-            return this.IndexOf(item) >= 0;
+            EnsureCollectionInSync();
+            VerifyRefreshNotDeferred();
+            return IndexOf(item) >= 0;
         }
 
         /// <summary>
@@ -1917,12 +1917,12 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>IDisposable used to notify that we no longer need to defer, when we dispose</returns>
         public IDisposable DeferRefresh()
         {
-            if (this.IsAddingNew || this.IsEditingItem)
+            if (IsAddingNew || IsEditingItem)
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, PagedCollectionViewResources.OperationNotAllowedDuringAddOrEdit, "DeferRefresh"));
             }
 
-            ++this._deferLevel;
+            ++_deferLevel;
             return new DeferHelper(this);
         }
 
@@ -1935,26 +1935,26 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="item">Item we want to edit</param>
         public void EditItem(object item)
         {
-            this.VerifyRefreshNotDeferred();
+            VerifyRefreshNotDeferred();
 
-            if (this.IsAddingNew)
+            if (IsAddingNew)
             {
-                if (Object.Equals(item, this.CurrentAddItem))
+                if (Equals(item, CurrentAddItem))
                 {
                     // EditItem(newItem) is a no-op
                     return;
                 }
 
                 // implicitly close a previous AddNew
-                this.CommitNew();
+                CommitNew();
             }
 
             // implicitly close a previous EditItem transaction
-            this.CommitEdit();
+            CommitEdit();
 
-            this.CurrentEditItem = item;
+            CurrentEditItem = item;
 
-            System.ComponentModel.IEditableObject ieo = item as System.ComponentModel.IEditableObject;
+            IEditableObject ieo = item as IEditableObject;
             if (ieo != null)
             {
                 ieo.BeginEdit();
@@ -1969,38 +1969,38 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>IEnumerator for the collection</returns>
         public IEnumerator GetEnumerator()
         {
-            this.EnsureCollectionInSync();
-            this.VerifyRefreshNotDeferred();
+            EnsureCollectionInSync();
+            VerifyRefreshNotDeferred();
 
-            if (this.IsGrouping)
+            if (IsGrouping)
             {
-                CollectionViewGroupRoot group = this.RootGroup;
+                CollectionViewGroupRoot group = RootGroup;
                 return group != null ? group.GetLeafEnumerator() : null;
             }
 
             // if we are paging
-            if (this.PageSize > 0)
+            if (PageSize > 0)
             {
                 List<object> list = new List<object>();
 
                 // if we are in the middle of asynchronous load
-                if (this.PageIndex < 0)
+                if (PageIndex < 0)
                 {
                     return list.GetEnumerator();
                 }
 
-                for (int index = this._pageSize * this.PageIndex;
-                    index < (int)Math.Min(this._pageSize * (this.PageIndex + 1), this.InternalList.Count);
+                for (int index = _pageSize * PageIndex;
+                    index < (int)Math.Min(_pageSize * (PageIndex + 1), InternalList.Count);
                     index++)
                 {
-                    list.Add(this.InternalList[index]);
+                    list.Add(InternalList[index]);
                 }
 
-                return new NewItemAwareEnumerator(this, list.GetEnumerator(), this.CurrentAddItem);
+                return new NewItemAwareEnumerator(this, list.GetEnumerator(), CurrentAddItem);
             }
             else
             {
-                return new NewItemAwareEnumerator(this, this.InternalList.GetEnumerator(), this.CurrentAddItem);
+                return new NewItemAwareEnumerator(this, InternalList.GetEnumerator(), CurrentAddItem);
             }
         }
 
@@ -2010,7 +2010,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>IEnumerator that we get from our internal collection</returns>
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return this.GetEnumerator();
+            return GetEnumerator();
         }
 
         /// <summary>
@@ -2024,29 +2024,29 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Item at specified index</returns>
         public object GetItemAt(int index)
         {
-            this.EnsureCollectionInSync();
-            this.VerifyRefreshNotDeferred();
+            EnsureCollectionInSync();
+            VerifyRefreshNotDeferred();
 
             // for indicies larger than the count
-            if (index >= this.Count || index < 0)
+            if (index >= Count || index < 0)
             {
                 throw new ArgumentOutOfRangeException("index");
             }
 
-            if (this.IsGrouping)
+            if (IsGrouping)
             {
-                CollectionViewGroupRoot group = this.RootGroup;
+                CollectionViewGroupRoot group = RootGroup;
                 return group != null ?
-                    group.LeafAt(this._isUsingTemporaryGroup ? this.ConvertToInternalIndex(index) : index) :
+                    group.LeafAt(_isUsingTemporaryGroup ? ConvertToInternalIndex(index) : index) :
                     null;
             }
 
-            if (this.IsAddingNew && this.UsesLocalArray && index == this.Count - 1)
+            if (IsAddingNew && UsesLocalArray && index == Count - 1)
             {
-                return this.CurrentAddItem;
+                return CurrentAddItem;
             }
 
-            return this.InternalItemAt(this.ConvertToInternalIndex(index));
+            return InternalItemAt(ConvertToInternalIndex(index));
         }
 
         /// <summary> 
@@ -2056,27 +2056,27 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Index of specified item</returns>
         public int IndexOf(object item)
         {
-            this.EnsureCollectionInSync();
-            this.VerifyRefreshNotDeferred();
+            EnsureCollectionInSync();
+            VerifyRefreshNotDeferred();
 
-            if (this.IsGrouping)
+            if (IsGrouping)
             {
-                CollectionViewGroupRoot group = this.RootGroup;
+                CollectionViewGroupRoot group = RootGroup;
                 return group != null ? group.LeafIndexOf(item) : -1;
             }
-            if (this.IsAddingNew && Object.Equals(item, this.CurrentAddItem) && this.UsesLocalArray)
+            if (IsAddingNew && Equals(item, CurrentAddItem) && UsesLocalArray)
             {
-                return this.Count - 1;
+                return Count - 1;
             }
 
-            int internalIndex = this.InternalIndexOf(item);
+            int internalIndex = InternalIndexOf(item);
 
-            if (this.PageSize > 0 && internalIndex != -1)
+            if (PageSize > 0 && internalIndex != -1)
             {
-                if ((internalIndex >= (this.PageIndex * this._pageSize)) &&
-                    (internalIndex < ((this.PageIndex + 1) * this._pageSize)))
+                if ((internalIndex >= (PageIndex * _pageSize)) &&
+                    (internalIndex < ((PageIndex + 1) * _pageSize)))
                 {
-                    return internalIndex - (this.PageIndex * this._pageSize);
+                    return internalIndex - (PageIndex * _pageSize);
                 }
                 else
                 {
@@ -2096,22 +2096,22 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Whether the operation was successful</returns>
         public bool MoveCurrentTo(object item)
         {
-            this.VerifyRefreshNotDeferred();
+            VerifyRefreshNotDeferred();
 
             // if already on item, don't do anything
-            if (Object.Equals(this.CurrentItem, item))
+            if (Equals(CurrentItem, item))
             {
                 // also check that we're not fooled by a false null currentItem
-                if (item != null || this.IsCurrentInView)
+                if (item != null || IsCurrentInView)
                 {
-                    return this.IsCurrentInView;
+                    return IsCurrentInView;
                 }
             }
 
             // if the item is not found IndexOf() will return -1, and
             // the MoveCurrentToPosition() below will move current to BeforeFirst
             // The IndexOf function takes into account paging, filtering, and sorting
-            return this.MoveCurrentToPosition(this.IndexOf(item));
+            return MoveCurrentToPosition(IndexOf(item));
         }
 
         /// <summary> 
@@ -2120,9 +2120,9 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Whether the operation was successful</returns>
         public bool MoveCurrentToFirst()
         {
-            this.VerifyRefreshNotDeferred();
+            VerifyRefreshNotDeferred();
 
-            return this.MoveCurrentToPosition(0);
+            return MoveCurrentToPosition(0);
         }
 
         /// <summary> 
@@ -2131,11 +2131,11 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Whether the operation was successful</returns>
         public bool MoveCurrentToLast()
         {
-            this.VerifyRefreshNotDeferred();
+            VerifyRefreshNotDeferred();
 
-            int index = this.Count - 1;
+            int index = Count - 1;
 
-            return this.MoveCurrentToPosition(index);
+            return MoveCurrentToPosition(index);
         }
 
         /// <summary> 
@@ -2144,13 +2144,13 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Whether the operation was successful</returns>
         public bool MoveCurrentToNext()
         {
-            this.VerifyRefreshNotDeferred();
+            VerifyRefreshNotDeferred();
 
-            int index = this.CurrentPosition + 1;
+            int index = CurrentPosition + 1;
 
-            if (index <= this.Count)
+            if (index <= Count)
             {
-                return this.MoveCurrentToPosition(index);
+                return MoveCurrentToPosition(index);
             }
             else
             {
@@ -2165,41 +2165,41 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>True if the resulting CurrentItem is an item within the view; otherwise False</returns>
         public bool MoveCurrentToPosition(int position)
         {
-            this.VerifyRefreshNotDeferred();
+            VerifyRefreshNotDeferred();
 
             // We want to allow the user to set the currency to just
             // beyond the last item. EnumerableCollectionView in WPF
             // also checks (position > this.Count) though the ListCollectionView
             // looks for (position >= this.Count).
-            if (position < -1 || position > this.Count)
+            if (position < -1 || position > Count)
             {
                 throw new ArgumentOutOfRangeException("position");
             }
 
-            if ((position != this.CurrentPosition || !this.IsCurrentInSync)
-                && this.OkToChangeCurrent())
+            if ((position != CurrentPosition || !IsCurrentInSync)
+                && OkToChangeCurrent())
             {
-                bool oldIsCurrentAfterLast = this.IsCurrentAfterLast;
-                bool oldIsCurrentBeforeFirst = this.IsCurrentBeforeFirst;
+                bool oldIsCurrentAfterLast = IsCurrentAfterLast;
+                bool oldIsCurrentBeforeFirst = IsCurrentBeforeFirst;
 
-                this.SetCurrentToPosition(position);
-                this.OnCurrentChanged();
+                SetCurrentToPosition(position);
+                OnCurrentChanged();
 
-                if (this.IsCurrentAfterLast != oldIsCurrentAfterLast)
+                if (IsCurrentAfterLast != oldIsCurrentAfterLast)
                 {
-                    this.OnPropertyChanged("IsCurrentAfterLast");
+                    OnPropertyChanged("IsCurrentAfterLast");
                 }
 
-                if (this.IsCurrentBeforeFirst != oldIsCurrentBeforeFirst)
+                if (IsCurrentBeforeFirst != oldIsCurrentBeforeFirst)
                 {
-                    this.OnPropertyChanged("IsCurrentBeforeFirst");
+                    OnPropertyChanged("IsCurrentBeforeFirst");
                 }
 
-                this.OnPropertyChanged("CurrentPosition");
-                this.OnPropertyChanged("CurrentItem");
+                OnPropertyChanged("CurrentPosition");
+                OnPropertyChanged("CurrentItem");
             }
 
-            return this.IsCurrentInView;
+            return IsCurrentInView;
         }
 
         /// <summary> 
@@ -2208,13 +2208,13 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Whether the operation was successful</returns>
         public bool MoveCurrentToPrevious()
         {
-            this.VerifyRefreshNotDeferred();
+            VerifyRefreshNotDeferred();
 
-            int index = this.CurrentPosition - 1;
+            int index = CurrentPosition - 1;
 
             if (index >= -1)
             {
-                return this.MoveCurrentToPosition(index);
+                return MoveCurrentToPosition(index);
             }
             else
             {
@@ -2228,7 +2228,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Whether or not the move was successful.</returns>
         public bool MoveToFirstPage()
         {
-            return this.MoveToPage(0);
+            return MoveToPage(0);
         }
 
         /// <summary>
@@ -2238,9 +2238,9 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Whether or not the move was successful.</returns>
         public bool MoveToLastPage()
         {
-            if (this.TotalItemCount != -1 && this.PageSize > 0)
+            if (TotalItemCount != -1 && PageSize > 0)
             {
-                return this.MoveToPage(this.PageCount - 1);
+                return MoveToPage(PageCount - 1);
             }
             else
             {
@@ -2254,7 +2254,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Whether or not the move was successful.</returns>
         public bool MoveToNextPage()
         {
-            return this.MoveToPage(this._pageIndex + 1);
+            return MoveToPage(_pageIndex + 1);
         }
 
         /// <summary>
@@ -2272,47 +2272,47 @@ namespace Twainsoft.PagedCollectionView.Data
 
             // if the Refresh is deferred, cache the requested PageIndex so that we
             // can move to the desired page when EndDefer is called.
-            if (this.IsRefreshDeferred)
+            if (IsRefreshDeferred)
             {
                 // set cached value and flag so that we move to the page on EndDefer
-                this._cachedPageIndex = pageIndex;
-                this.SetFlag(CollectionViewFlags.IsMoveToPageDeferred, true);
+                _cachedPageIndex = pageIndex;
+                SetFlag(CollectionViewFlags.IsMoveToPageDeferred, true);
                 return false;
             }
 
             // check for invalid pageIndex
-            if (pageIndex == -1 && this.PageSize > 0)
+            if (pageIndex == -1 && PageSize > 0)
             {
                 return false;
             }
 
             // Check if the target page is out of bound, or equal to the current page
-            if (pageIndex >= this.PageCount || this._pageIndex == pageIndex)
+            if (pageIndex >= PageCount || _pageIndex == pageIndex)
             {
                 return false;
             }
 
             // Check with the ICollectionView.CurrentChanging listeners if it's OK to move
             // on to another page
-            if (!this.OkToChangeCurrent())
+            if (!OkToChangeCurrent())
             {
                 return false;
             }
 
-            if (this.RaisePageChanging(pageIndex) && pageIndex != -1)
+            if (RaisePageChanging(pageIndex) && pageIndex != -1)
             {
                 // Page move was cancelled. Abort the move, but only if the target index isn't -1.
                 return false;
             }
 
             // Check if there is a current edited or new item so changes can be committed first.
-            if (this.CurrentAddItem != null || this.CurrentEditItem != null)
+            if (CurrentAddItem != null || CurrentEditItem != null)
             {
                 // Remember current currency values for upcoming OnPropertyChanged notifications
-                object oldCurrentItem = this.CurrentItem;
-                int oldCurrentPosition = this.CurrentPosition;
-                bool oldIsCurrentAfterLast = this.IsCurrentAfterLast;
-                bool oldIsCurrentBeforeFirst = this.IsCurrentBeforeFirst;
+                object oldCurrentItem = CurrentItem;
+                int oldCurrentPosition = CurrentPosition;
+                bool oldIsCurrentAfterLast = IsCurrentAfterLast;
+                bool oldIsCurrentBeforeFirst = IsCurrentBeforeFirst;
 
                 // Currently CommitNew()/CommitEdit()/CancelNew()/CancelEdit() can't handle committing or 
                 // cancelling an item that is no longer on the current page. That's acceptable and means that
@@ -2320,25 +2320,25 @@ namespace Twainsoft.PagedCollectionView.Data
                 // The reason why we temporarily reset currency here is to give a chance to the bound
                 // controls to commit or cancel their potential edits/addition. The DataForm calls ForceEndEdit()
                 // for example as a result of changing currency.
-                this.SetCurrentToPosition(-1);
-                this.RaiseCurrencyChanges(true /*fireChangedEvent*/, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
+                SetCurrentToPosition(-1);
+                RaiseCurrencyChanges(true /*fireChangedEvent*/, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
 
                 // If the bound controls did not successfully end their potential item editing/addition, the 
                 // page move needs to be aborted. 
-                if (this.CurrentAddItem != null || this.CurrentEditItem != null)
+                if (CurrentAddItem != null || CurrentEditItem != null)
                 {
                     // Since PageChanging was raised and not cancelled, a PageChanged notification needs to be raised
                     // even though the PageIndex actually did not change.
-                    this.RaisePageChanged();
+                    RaisePageChanged();
 
                     // Restore original currency
-                    Debug.Assert(this.CurrentItem == null, "Unexpected this.CurrentItem != null");
-                    Debug.Assert(this.CurrentPosition == -1, "Unexpected this.CurrentPosition != -1");
-                    Debug.Assert(this.IsCurrentBeforeFirst, "Unexpected this.IsCurrentBeforeFirst == false");
-                    Debug.Assert(!this.IsCurrentAfterLast, "Unexpected this.IsCurrentAfterLast == true");
+                    Debug.Assert(CurrentItem == null, "Unexpected this.CurrentItem != null");
+                    Debug.Assert(CurrentPosition == -1, "Unexpected this.CurrentPosition != -1");
+                    Debug.Assert(IsCurrentBeforeFirst, "Unexpected this.IsCurrentBeforeFirst == false");
+                    Debug.Assert(!IsCurrentAfterLast, "Unexpected this.IsCurrentAfterLast == true");
 
-                    this.SetCurrentToPosition(oldCurrentPosition);
-                    this.RaiseCurrencyChanges(false /*fireChangedEvent*/, null /*oldCurrentItem*/, -1 /*oldCurrentPosition*/,
+                    SetCurrentToPosition(oldCurrentPosition);
+                    RaiseCurrencyChanges(false /*fireChangedEvent*/, null /*oldCurrentItem*/, -1 /*oldCurrentPosition*/,
                         true /*oldIsCurrentBeforeFirst*/, false /*oldIsCurrentAfterLast*/);
 
                     return false;
@@ -2346,11 +2346,11 @@ namespace Twainsoft.PagedCollectionView.Data
 
                 // Finally raise a CurrentChanging notification for the upcoming currency change
                 // that will occur in CompletePageMove(pageIndex).
-                this.OnCurrentChanging();
+                OnCurrentChanging();
             }
 
-            this.IsPageChanging = true;
-            this.CompletePageMove(pageIndex);
+            IsPageChanging = true;
+            CompletePageMove(pageIndex);
 
             return true;
         }
@@ -2361,7 +2361,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Whether or not the move was successful.</returns>
         public bool MoveToPreviousPage()
         {
-            return this.MoveToPage(this._pageIndex - 1);
+            return MoveToPage(_pageIndex - 1);
         }
 
         /// <summary>
@@ -2375,9 +2375,9 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Whether the item passes the filter</returns>
         public bool PassesFilter(object item)
         {
-            if (this.Filter != null)
+            if (Filter != null)
             {
-                return this.Filter(item);
+                return Filter(item);
             }
 
             return true;
@@ -2394,7 +2394,7 @@ namespace Twainsoft.PagedCollectionView.Data
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, PagedCollectionViewResources.OperationNotAllowedDuringAddOrEdit, "Refresh"));
             }
 
-            this.RefreshInternal();
+            RefreshInternal();
         }
 
         /// <summary>
@@ -2405,10 +2405,10 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="item">Item we want to remove</param>
         public void Remove(object item)
         {
-            int index = this.IndexOf(item);
+            int index = IndexOf(item);
             if (index >= 0)
             {
-                this.RemoveAt(index);
+                RemoveAt(index);
             }
         }
 
@@ -2420,87 +2420,87 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="index">Index of the item we want to remove</param>
         public void RemoveAt(int index)
         {
-            if (index < 0 || index >= this.Count)
+            if (index < 0 || index >= Count)
             {
                 throw new ArgumentOutOfRangeException("index", PagedCollectionViewResources.IndexOutOfRange);
             }
 
-            if (this.IsEditingItem || this.IsAddingNew)
+            if (IsEditingItem || IsAddingNew)
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, PagedCollectionViewResources.OperationNotAllowedDuringAddOrEdit, "RemoveAt"));
             }
-            else if (!this.CanRemove)
+            else if (!CanRemove)
             {
                 throw new InvalidOperationException(PagedCollectionViewResources.RemoveNotSupported);
             }
 
-            this.VerifyRefreshNotDeferred();
+            VerifyRefreshNotDeferred();
 
             // convert the index from "view-relative" to "list-relative"
-            object item = this.GetItemAt(index);
+            object item = GetItemAt(index);
 
             // before we remove the item, see if we are not on the last page
             // and will have to bring in a new item to replace it
-            bool replaceItem = this.PageSize > 0 && !this.OnLastLocalPage;
+            bool replaceItem = PageSize > 0 && !OnLastLocalPage;
 
             try
             {
                 // temporarily disable the CollectionChanged event
                 // handler so filtering, sorting, or grouping
                 // doesn't get applied yet
-                this.SetFlag(CollectionViewFlags.ShouldProcessCollectionChanged, false);
+                SetFlag(CollectionViewFlags.ShouldProcessCollectionChanged, false);
 
-                if (this.SourceList != null)
+                if (SourceList != null)
                 {
-                    this.SourceList.Remove(item);
+                    SourceList.Remove(item);
                 }
             }
             finally
             {
-                this.SetFlag(CollectionViewFlags.ShouldProcessCollectionChanged, true);
+                SetFlag(CollectionViewFlags.ShouldProcessCollectionChanged, true);
             }
 
             // Modify our _trackingEnumerator so that it shows that our collection is "up to date" 
             // and will not refresh for now.
-            this._trackingEnumerator = this._sourceCollection.GetEnumerator();
+            _trackingEnumerator = _sourceCollection.GetEnumerator();
 
-            Debug.Assert(index == this.IndexOf(item), "IndexOf returned unexpected value");
+            Debug.Assert(index == IndexOf(item), "IndexOf returned unexpected value");
 
             // remove the item from the internal list
-            this._internalList.Remove(item);
+            _internalList.Remove(item);
 
-            if (this.IsGrouping)
+            if (IsGrouping)
             {
-                if (this.PageSize > 0)
+                if (PageSize > 0)
                 {
-                    this._temporaryGroup.RemoveFromSubgroups(item);
+                    _temporaryGroup.RemoveFromSubgroups(item);
                 }
-                this._group.RemoveFromSubgroups(item);
+                _group.RemoveFromSubgroups(item);
             }
 
-            object oldCurrentItem = this.CurrentItem;
-            int oldCurrentPosition = this.CurrentPosition;
-            bool oldIsCurrentAfterLast = this.IsCurrentAfterLast;
-            bool oldIsCurrentBeforeFirst = this.IsCurrentBeforeFirst;
+            object oldCurrentItem = CurrentItem;
+            int oldCurrentPosition = CurrentPosition;
+            bool oldIsCurrentAfterLast = IsCurrentAfterLast;
+            bool oldIsCurrentBeforeFirst = IsCurrentBeforeFirst;
 
-            this.AdjustCurrencyForRemove(index);
+            AdjustCurrencyForRemove(index);
 
             // fire remove notification
-            this.OnCollectionChanged(
+            OnCollectionChanged(
                 new NotifyCollectionChangedEventArgs(
                     NotifyCollectionChangedAction.Remove,
                     item,
                     index));
 
-            this.RaiseCurrencyChanges(false, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
+            RaiseCurrencyChanges(false, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
 
             // if we removed all items from the current page,
             // move to the previous page. we do not need to 
             // fire additional notifications, as moving the page will
             // trigger a reset.
-            if (this.NeedToMoveToPreviousPage)
+            if (NeedToMoveToPreviousPage)
             {
-                this.MoveToPreviousPage();
+                MoveToPreviousPage();
                 return;
             }
 
@@ -2509,21 +2509,21 @@ namespace Twainsoft.PagedCollectionView.Data
             if (replaceItem)
             {
                 // we first need to add the item into the current group
-                if (this.IsGrouping)
+                if (IsGrouping)
                 {
-                    object newItem = this._temporaryGroup.LeafAt((this.PageSize * (this.PageIndex + 1)) - 1);
+                    object newItem = _temporaryGroup.LeafAt((PageSize * (PageIndex + 1)) - 1);
                     if (newItem != null)
                     {
-                        this._group.AddToSubgroups(newItem, false /*loading*/);
+                        _group.AddToSubgroups(newItem, false /*loading*/);
                     }
                 }
 
                 // fire the add notification
-                this.OnCollectionChanged(
+                OnCollectionChanged(
                     new NotifyCollectionChangedEventArgs(
                         NotifyCollectionChangedAction.Add,
-                        this.GetItemAt(this.PageSize - 1),
-                        this.PageSize - 1));
+                        GetItemAt(PageSize - 1),
+                        PageSize - 1));
             }
         }
 
@@ -2574,43 +2574,43 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             if (newCurrentItem != null)
             {
-                int newItemIndex = this.IndexOf(newCurrentItem);
+                int newItemIndex = IndexOf(newCurrentItem);
 
                 // if we already have the correct currency set, we don't 
                 // want to unnecessarily fire events
-                if (newItemIndex >= 0 && (newItemIndex != this.CurrentPosition || !this.IsCurrentInSync))
+                if (newItemIndex >= 0 && (newItemIndex != CurrentPosition || !IsCurrentInSync))
                 {
-                    this.OnCurrentChanging();
-                    this.SetCurrent(newCurrentItem, newItemIndex);
+                    OnCurrentChanging();
+                    SetCurrent(newCurrentItem, newItemIndex);
                 }
                 return;
             }
 
-            if (this.Count == 1)
+            if (Count == 1)
             {
-                if (this.CurrentItem != null || this.CurrentPosition != -1)
+                if (CurrentItem != null || CurrentPosition != -1)
                 {
                     // fire current changing notification
-                    this.OnCurrentChanging();
+                    OnCurrentChanging();
                 }
 
                 // added first item; set current at BeforeFirst
-                this.SetCurrent(null, -1);
+                SetCurrent(null, -1);
             }
-            else if (index <= this.CurrentPosition)
+            else if (index <= CurrentPosition)
             {
                 // fire current changing notification
-                this.OnCurrentChanging();
+                OnCurrentChanging();
 
                 // adjust current index if insertion is earlier
-                int newPosition = this.CurrentPosition + 1;
-                if (newPosition >= this.Count)
+                int newPosition = CurrentPosition + 1;
+                if (newPosition >= Count)
                 {
                     // if currency was on last item and it got shifted up,
                     // keep currency on last item.
-                    newPosition = this.Count - 1;
+                    newPosition = Count - 1;
                 }
-                this.SetCurrent(this.GetItemAt(newPosition), newPosition);
+                SetCurrent(GetItemAt(newPosition), newPosition);
             }
         }
 
@@ -2621,29 +2621,29 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="index">Index of item involved in the collection change</param>
         private void AdjustCurrencyForEdit(object newCurrentItem, int index)
         {
-            if (newCurrentItem != null && this.IndexOf(newCurrentItem) >= 0)
+            if (newCurrentItem != null && IndexOf(newCurrentItem) >= 0)
             {
-                this.OnCurrentChanging();
-                this.SetCurrent(newCurrentItem, this.IndexOf(newCurrentItem));
+                OnCurrentChanging();
+                SetCurrent(newCurrentItem, IndexOf(newCurrentItem));
                 return;
             }
 
-            if (index <= this.CurrentPosition)
+            if (index <= CurrentPosition)
             {
                 // fire current changing notification
-                this.OnCurrentChanging();
+                OnCurrentChanging();
 
                 // adjust current index if insertion is earlier
-                int newPosition = this.CurrentPosition + 1;
-                if (newPosition < this.Count)
+                int newPosition = CurrentPosition + 1;
+                if (newPosition < Count)
                 {
                     // CurrentItem might be out of sync if underlying list is not INCC
                     // or if this Add is the result of a Replace (Rem + Add)
-                    this.SetCurrent(this.GetItemAt(newPosition), newPosition);
+                    SetCurrent(GetItemAt(newPosition), newPosition);
                 }
                 else
                 {
-                    this.SetCurrent(null, this.Count);
+                    SetCurrent(null, Count);
                 }
             }
         }
@@ -2656,30 +2656,30 @@ namespace Twainsoft.PagedCollectionView.Data
         private void AdjustCurrencyForRemove(int index)
         {
             // adjust current index if deletion is earlier
-            if (index < this.CurrentPosition)
+            if (index < CurrentPosition)
             {
                 // fire current changing notification
-                this.OnCurrentChanging();
+                OnCurrentChanging();
 
-                this.SetCurrent(this.CurrentItem, this.CurrentPosition - 1);
+                SetCurrent(CurrentItem, CurrentPosition - 1);
             }
 
             // adjust current index if > Count
-            if (this.CurrentPosition >= this.Count)
+            if (CurrentPosition >= Count)
             {
                 // fire current changing notification
-                this.OnCurrentChanging();
+                OnCurrentChanging();
 
-                this.SetCurrentToPosition(this.Count - 1);
+                SetCurrentToPosition(Count - 1);
             }
 
             // make sure that current position and item are in sync
-            if (!this.IsCurrentInSync)
+            if (!IsCurrentInSync)
             {
                 // fire current changing notification
-                this.OnCurrentChanging();
+                OnCurrentChanging();
 
-                this.SetCurrentToPosition(this.CurrentPosition);
+                SetCurrentToPosition(CurrentPosition);
             }
         }
 
@@ -2690,7 +2690,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Whether the specified flag is set</returns>
         private bool CheckFlag(CollectionViewFlags flags)
         {
-            return (this._flags & flags) != 0;
+            return (_flags & flags) != 0;
         }
 
         /// <summary>
@@ -2700,49 +2700,49 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="pageIndex">Final page index</param>
         private void CompletePageMove(int pageIndex)
         {
-            Debug.Assert(this._pageIndex != pageIndex, "Unexpected this._pageIndex == pageIndex");
+            Debug.Assert(_pageIndex != pageIndex, "Unexpected this._pageIndex == pageIndex");
 
             // to see whether or not to fire an OnPropertyChanged
-            int oldCount = this.Count;
-            object oldCurrentItem = this.CurrentItem;
-            int oldCurrentPosition = this.CurrentPosition;
-            bool oldIsCurrentAfterLast = this.IsCurrentAfterLast;
-            bool oldIsCurrentBeforeFirst = this.IsCurrentBeforeFirst;
+            int oldCount = Count;
+            object oldCurrentItem = CurrentItem;
+            int oldCurrentPosition = CurrentPosition;
+            bool oldIsCurrentAfterLast = IsCurrentAfterLast;
+            bool oldIsCurrentBeforeFirst = IsCurrentBeforeFirst;
 
-            this._pageIndex = pageIndex;
+            _pageIndex = pageIndex;
 
             // update the groups
-            if (this.IsGrouping && this.PageSize > 0)
+            if (IsGrouping && PageSize > 0)
             {
-                this.PrepareGroupsForCurrentPage();
+                PrepareGroupsForCurrentPage();
             }
 
             // update currency
-            if (this.Count >= 1)
+            if (Count >= 1)
             {
-                this.SetCurrent(this.GetItemAt(0), 0);
+                SetCurrent(GetItemAt(0), 0);
             }
             else
             {
-                this.SetCurrent(null, -1);
+                SetCurrent(null, -1);
             }
 
-            this.IsPageChanging = false;
-            this.OnPropertyChanged("PageIndex");
-            this.RaisePageChanged();
+            IsPageChanging = false;
+            OnPropertyChanged("PageIndex");
+            RaisePageChanged();
 
             // if the count has changed
-            if (this.Count != oldCount)
+            if (Count != oldCount)
             {
-                this.OnPropertyChanged("Count");
+                OnPropertyChanged("Count");
             }
 
-            this.OnCollectionChanged(
+            OnCollectionChanged(
                 new NotifyCollectionChangedEventArgs(
                     NotifyCollectionChangedAction.Reset));
 
             // Always raise CurrentChanged since the calling method MoveToPage(pageIndex) raised CurrentChanging.
-            this.RaiseCurrencyChanges(true /*fireChangedEvent*/, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
+            RaiseCurrencyChanges(true /*fireChangedEvent*/, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
         }
 
         /// <summary>
@@ -2754,9 +2754,9 @@ namespace Twainsoft.PagedCollectionView.Data
         private int ConvertToInternalIndex(int index)
         {
             Debug.Assert(index > -1, "Unexpected index == -1");
-            if (this.PageSize > 0)
+            if (PageSize > 0)
             {
-                return (this._pageSize * this.PageIndex) + index;
+                return (_pageSize * PageIndex) + index;
             }
             else
             {
@@ -2769,13 +2769,13 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private void CopySourceToInternalList()
         {
-            this._internalList = new List<object>();
+            _internalList = new List<object>();
 
-            IEnumerator enumerator = this.SourceCollection.GetEnumerator();
+            IEnumerator enumerator = SourceCollection.GetEnumerator();
 
             while (enumerator.MoveNext())
             {
-                this._internalList.Add(enumerator.Current);
+                _internalList.Add(enumerator.Current);
             }
         }
 
@@ -2787,11 +2787,11 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>The new item we ended adding</returns>
         private object EndAddNew(bool cancel)
         {
-            object newItem = this.CurrentAddItem;
+            object newItem = CurrentAddItem;
 
-            this.CurrentAddItem = null;    // leave "adding-new" mode
+            CurrentAddItem = null;    // leave "adding-new" mode
 
-            System.ComponentModel.IEditableObject ieo = newItem as System.ComponentModel.IEditableObject;
+            IEditableObject ieo = newItem as IEditableObject;
             if (ieo != null)
             {
                 if (cancel)
@@ -2812,26 +2812,26 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private void EndDefer()
         {
-            --this._deferLevel;
+            --_deferLevel;
 
-            if (this._deferLevel == 0)
+            if (_deferLevel == 0)
             {
-                if (this.CheckFlag(CollectionViewFlags.IsUpdatePageSizeDeferred))
+                if (CheckFlag(CollectionViewFlags.IsUpdatePageSizeDeferred))
                 {
-                    this.SetFlag(CollectionViewFlags.IsUpdatePageSizeDeferred, false);
-                    this.PageSize = this._cachedPageSize;
+                    SetFlag(CollectionViewFlags.IsUpdatePageSizeDeferred, false);
+                    PageSize = _cachedPageSize;
                 }
 
-                if (this.CheckFlag(CollectionViewFlags.IsMoveToPageDeferred))
+                if (CheckFlag(CollectionViewFlags.IsMoveToPageDeferred))
                 {
-                    this.SetFlag(CollectionViewFlags.IsMoveToPageDeferred, false);
-                    this.MoveToPage(this._cachedPageIndex);
-                    this._cachedPageIndex = -1;
+                    SetFlag(CollectionViewFlags.IsMoveToPageDeferred, false);
+                    MoveToPage(_cachedPageIndex);
+                    _cachedPageIndex = -1;
                 }
 
-                if (this.CheckFlag(CollectionViewFlags.NeedsRefresh))
+                if (CheckFlag(CollectionViewFlags.NeedsRefresh))
                 {
-                    this.Refresh();
+                    Refresh();
                 }
             }
         }
@@ -2841,13 +2841,13 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private void EnsureItemConstructor()
         {
-            if (!this._itemConstructorIsValid)
+            if (!_itemConstructorIsValid)
             {
-                Type itemType = this.GetItemType(true);
+                Type itemType = GetItemType(true);
                 if (itemType != null)
                 {
-                    this._itemConstructor = itemType.GetConstructor(Type.EmptyTypes);
-                    this._itemConstructorIsValid = true;
+                    _itemConstructor = itemType.GetConstructor(Type.EmptyTypes);
+                    _itemConstructorIsValid = true;
                 }
             }
         }
@@ -2860,11 +2860,11 @@ namespace Twainsoft.PagedCollectionView.Data
         private void EnsureCollectionInSync()
         {
             // if the IEnumerable is not a INotifyCollectionChanged
-            if (this._pollForChanges)
+            if (_pollForChanges)
             {
                 try
                 {
-                    this._trackingEnumerator.MoveNext();
+                    _trackingEnumerator.MoveNext();
                 }
                 catch (InvalidOperationException)
                 {
@@ -2872,8 +2872,8 @@ namespace Twainsoft.PagedCollectionView.Data
                     // on the enumerator throws an InvalidOperationException, stating
                     // that the collection has been modified. Therefore, we know when
                     // to update our internal collection.
-                    this._trackingEnumerator = this.SourceCollection.GetEnumerator();
-                    this.RefreshOrDefer();
+                    _trackingEnumerator = SourceCollection.GetEnumerator();
+                    RefreshOrDefer();
                 }
             }
         }
@@ -2885,7 +2885,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>The type of the items in the collection</returns>
         private Type GetItemType(bool useRepresentativeItem)
         {
-            Type collectionType = this.SourceCollection.GetType();
+            Type collectionType = SourceCollection.GetType();
             Type[] interfaces = collectionType.GetInterfaces();
 
             // Look for IEnumerable<T>.  All generic collections should implement
@@ -2910,7 +2910,7 @@ namespace Twainsoft.PagedCollectionView.Data
             if (useRepresentativeItem)
             {
                 // get type of a representative item
-                object item = this.GetRepresentativeItem();
+                object item = GetRepresentativeItem();
                 if (item != null)
                 {
                     return item.GetType();
@@ -2926,12 +2926,12 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>An item that can represent the collection</returns>
         private object GetRepresentativeItem()
         {
-            if (this.IsEmpty)
+            if (IsEmpty)
             {
                 return null;
             }
 
-            IEnumerator enumerator = this.GetEnumerator();
+            IEnumerator enumerator = GetEnumerator();
             while (enumerator.MoveNext())
             {
                 object item = enumerator.Current;
@@ -2953,7 +2953,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Integer value on where in the InternalList the object is located</returns>
         private int InternalIndexOf(object item)
         {
-            return this.InternalList.IndexOf(item);
+            return InternalList.IndexOf(item);
         }
 
         /// <summary>
@@ -2963,9 +2963,9 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>The item at the specified index</returns>
         private object InternalItemAt(int index)
         {
-            if (index >= 0 && index < this.InternalList.Count)
+            if (index >= 0 && index < InternalList.Count)
             {
-                return this.InternalList[index];
+                return InternalList[index];
             }
             else
             {
@@ -2980,7 +2980,7 @@ namespace Twainsoft.PagedCollectionView.Data
         private bool OkToChangeCurrent()
         {
             CurrentChangingEventArgs args = new CurrentChangingEventArgs();
-            this.OnCurrentChanging(args);
+            OnCurrentChanging(args);
             return !args.Cancel;
         }
 
@@ -3004,14 +3004,14 @@ namespace Twainsoft.PagedCollectionView.Data
             unchecked
             {
                 // invalidate enumerators because of a change
-                ++this._timestamp;
+                ++_timestamp;
             }
 
-            if (this.CollectionChanged != null)
+            if (CollectionChanged != null)
             {
-                if (args.Action != NotifyCollectionChangedAction.Add || this.PageSize == 0 || args.NewStartingIndex < this.Count)
+                if (args.Action != NotifyCollectionChangedAction.Add || PageSize == 0 || args.NewStartingIndex < Count)
                 {
-                    this.CollectionChanged(this, args);
+                    CollectionChanged(this, args);
                 }
             }
 
@@ -3019,14 +3019,14 @@ namespace Twainsoft.PagedCollectionView.Data
             // replaced within the collection.
             if (args.Action != NotifyCollectionChangedAction.Replace)
             {
-                this.OnPropertyChanged("Count");
+                OnPropertyChanged("Count");
             }
 
-            bool listIsEmpty = this.IsEmpty;
-            if (listIsEmpty != this.CheckFlag(CollectionViewFlags.CachedIsEmpty))
+            bool listIsEmpty = IsEmpty;
+            if (listIsEmpty != CheckFlag(CollectionViewFlags.CachedIsEmpty))
             {
-                this.SetFlag(CollectionViewFlags.CachedIsEmpty, listIsEmpty);
-                this.OnPropertyChanged("IsEmpty");
+                SetFlag(CollectionViewFlags.CachedIsEmpty, listIsEmpty);
+                OnPropertyChanged("IsEmpty");
             }
         }
 
@@ -3035,11 +3035,11 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private void OnCurrentChanged()
         {
-            if (this.CurrentChanged != null && this._currentChangedMonitor.Enter())
+            if (CurrentChanged != null && _currentChangedMonitor.Enter())
             {
-                using (this._currentChangedMonitor)
+                using (_currentChangedMonitor)
                 {
-                    this.CurrentChanged(this, EventArgs.Empty);
+                    CurrentChanged(this, EventArgs.Empty);
                 }
             }
         }
@@ -3054,7 +3054,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </exception>
         private void OnCurrentChanging()
         {
-            this.OnCurrentChanging(uncancelableCurrentChangingEventArgs);
+            OnCurrentChanging(uncancelableCurrentChangingEventArgs);
         }
 
         /// <summary>
@@ -3075,7 +3075,7 @@ namespace Twainsoft.PagedCollectionView.Data
                 throw new ArgumentNullException("args");
             }
 
-            if (this._currentChangedMonitor.Busy)
+            if (_currentChangedMonitor.Busy)
             {
                 if (args.IsCancelable)
                 {
@@ -3085,9 +3085,9 @@ namespace Twainsoft.PagedCollectionView.Data
                 return;
             }
 
-            if (this.CurrentChanging != null)
+            if (CurrentChanging != null)
             {
-                this.CurrentChanging(this, args);
+                CurrentChanging(this, args);
             }
         }
 
@@ -3098,12 +3098,12 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="e">Arguments for the NotifyCollectionChanged event</param>
         private void OnGroupByChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if (this.IsAddingNew || this.IsEditingItem)
+            if (IsAddingNew || IsEditingItem)
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, PagedCollectionViewResources.OperationNotAllowedDuringAddOrEdit, "Grouping"));
             }
 
-            this.RefreshOrDefer();
+            RefreshOrDefer();
         }
 
         /// <summary>
@@ -3113,26 +3113,26 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="e">Arguments for the GroupDescriptionChanged event</param>
         private void OnGroupDescriptionChanged(object sender, EventArgs e)
         {
-            if (this.IsAddingNew || this.IsEditingItem)
+            if (IsAddingNew || IsEditingItem)
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, PagedCollectionViewResources.OperationNotAllowedDuringAddOrEdit, "Grouping"));
             }
 
             // we want to make sure that the data is refreshed before we try to move to a page
             // since the refresh would take care of the filtering, sorting, and grouping.
-            this.RefreshOrDefer();
+            RefreshOrDefer();
 
-            if (this.PageSize > 0)
+            if (PageSize > 0)
             {
-                if (this.IsRefreshDeferred)
+                if (IsRefreshDeferred)
                 {
                     // set cached value and flag so that we move to first page on EndDefer
-                    this._cachedPageIndex = 0;
-                    this.SetFlag(CollectionViewFlags.IsMoveToPageDeferred, true);
+                    _cachedPageIndex = 0;
+                    SetFlag(CollectionViewFlags.IsMoveToPageDeferred, true);
                 }
                 else
                 {
-                    this.MoveToFirstPage();
+                    MoveToFirstPage();
                 }
             }
         }
@@ -3143,9 +3143,9 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="e">PropertyChangedEventArgs for this change</param>
         private void OnPropertyChanged(PropertyChangedEventArgs e)
         {
-            if (this.PropertyChanged != null)
+            if (PropertyChanged != null)
             {
-                this.PropertyChanged(this, e);
+                PropertyChanged(this, e);
             }
         }
 
@@ -3155,7 +3155,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="propertyName">Property name for the property that changed</param>
         private void OnPropertyChanged(string propertyName)
         {
-            this.OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
+            OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
         }
 
         /// <summary>
@@ -3164,22 +3164,22 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="groupRoot">The CollectionViewGroupRoot</param>
         private void PrepareGroupingComparer(CollectionViewGroupRoot groupRoot)
         {
-            if (groupRoot == this._temporaryGroup || this.PageSize == 0)
+            if (groupRoot == _temporaryGroup || PageSize == 0)
             {
                 CollectionViewGroupInternal.ListComparer listComparer = groupRoot.ActiveComparer as CollectionViewGroupInternal.ListComparer;
                 if (listComparer != null)
                 {
-                    listComparer.ResetList(this.InternalList);
+                    listComparer.ResetList(InternalList);
                 }
                 else
                 {
-                    groupRoot.ActiveComparer = new CollectionViewGroupInternal.ListComparer(this.InternalList);
+                    groupRoot.ActiveComparer = new CollectionViewGroupInternal.ListComparer(InternalList);
                 }
             }
-            else if (groupRoot == this._group)
+            else if (groupRoot == _group)
             {
                 // create the new comparer based on the current _temporaryGroup
-                groupRoot.ActiveComparer = new CollectionViewGroupInternal.CollectionViewGroupComparer(this._temporaryGroup);
+                groupRoot.ActiveComparer = new CollectionViewGroupInternal.CollectionViewGroupComparer(_temporaryGroup);
             }
         }
 
@@ -3191,41 +3191,41 @@ namespace Twainsoft.PagedCollectionView.Data
         private void PrepareGroups()
         {
             // we should only use this method if we aren't paging
-            Debug.Assert(this.PageSize == 0, "Unexpected PageSize != 0");
+            Debug.Assert(PageSize == 0, "Unexpected PageSize != 0");
 
-            this._group.Clear();
-            this._group.Initialize();
+            _group.Clear();
+            _group.Initialize();
 
-            this._group.IsDataInGroupOrder = this.CheckFlag(CollectionViewFlags.IsDataInGroupOrder);
+            _group.IsDataInGroupOrder = CheckFlag(CollectionViewFlags.IsDataInGroupOrder);
 
             // set to false so that we access internal collection items
             // instead of the group items, as they have been cleared
-            this._isGrouping = false;
+            _isGrouping = false;
 
-            if (this._group.GroupDescriptions.Count > 0)
+            if (_group.GroupDescriptions.Count > 0)
             {
-                for (int num = 0, count = this._internalList.Count; num < count; ++num)
+                for (int num = 0, count = _internalList.Count; num < count; ++num)
                 {
-                    object item = this._internalList[num];
-                    if (item != null && (!this.IsAddingNew || !object.Equals(this.CurrentAddItem, item)))
+                    object item = _internalList[num];
+                    if (item != null && (!IsAddingNew || !Equals(CurrentAddItem, item)))
                     {
-                        this._group.AddToSubgroups(item, true /*loading*/);
+                        _group.AddToSubgroups(item, true /*loading*/);
                     }
                 }
-                if (this.IsAddingNew)
+                if (IsAddingNew)
                 {
-                    this._group.InsertSpecialItem(this._group.Items.Count, this.CurrentAddItem, true);
+                    _group.InsertSpecialItem(_group.Items.Count, CurrentAddItem, true);
                 }
             }
 
-            this._isGrouping = this._group.GroupBy != null;
+            _isGrouping = _group.GroupBy != null;
 
             // now we set the value to false, so that subsequent adds will insert
             // into the correct groups.
-            this._group.IsDataInGroupOrder = false;
+            _group.IsDataInGroupOrder = false;
 
             // reset the grouping comparer
-            this.PrepareGroupingComparer(this._group);
+            PrepareGroupingComparer(_group);
         }
 
         /// <summary>
@@ -3239,39 +3239,39 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private void PrepareTemporaryGroups()
         {
-            this._temporaryGroup = new CollectionViewGroupRoot(this, this.CheckFlag(CollectionViewFlags.IsDataInGroupOrder));
+            _temporaryGroup = new CollectionViewGroupRoot(this, CheckFlag(CollectionViewFlags.IsDataInGroupOrder));
 
-            foreach (GroupDescription gd in this._group.GroupDescriptions)
+            foreach (GroupDescription gd in _group.GroupDescriptions)
             {
-                this._temporaryGroup.GroupDescriptions.Add(gd);
+                _temporaryGroup.GroupDescriptions.Add(gd);
             }
 
-            this._temporaryGroup.Initialize();
+            _temporaryGroup.Initialize();
 
             // set to false so that we access internal collection items
             // instead of the group items, as they have been cleared
-            this._isGrouping = false;
+            _isGrouping = false;
 
-            if (this._temporaryGroup.GroupDescriptions.Count > 0)
+            if (_temporaryGroup.GroupDescriptions.Count > 0)
             {
-                for (int num = 0, count = this._internalList.Count; num < count; ++num)
+                for (int num = 0, count = _internalList.Count; num < count; ++num)
                 {
-                    object item = this._internalList[num];
-                    if (item != null && (!this.IsAddingNew || !object.Equals(this.CurrentAddItem, item)))
+                    object item = _internalList[num];
+                    if (item != null && (!IsAddingNew || !Equals(CurrentAddItem, item)))
                     {
-                        this._temporaryGroup.AddToSubgroups(item, true /*loading*/);
+                        _temporaryGroup.AddToSubgroups(item, true /*loading*/);
                     }
                 }
-                if (this.IsAddingNew)
+                if (IsAddingNew)
                 {
-                    this._temporaryGroup.InsertSpecialItem(this._temporaryGroup.Items.Count, this.CurrentAddItem, true);
+                    _temporaryGroup.InsertSpecialItem(_temporaryGroup.Items.Count, CurrentAddItem, true);
                 }
             }
 
-            this._isGrouping = this._temporaryGroup.GroupBy != null;
+            _isGrouping = _temporaryGroup.GroupBy != null;
 
             // reset the grouping comparer
-            this.PrepareGroupingComparer(this._temporaryGroup);
+            PrepareGroupingComparer(_temporaryGroup);
         }
 
         /// <summary>
@@ -3281,44 +3281,44 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private void PrepareGroupsForCurrentPage()
         {
-            this._group.Clear();
-            this._group.Initialize();
+            _group.Clear();
+            _group.Initialize();
 
             // set to indicate that we will be pulling data from the temporary group data
-            this._isUsingTemporaryGroup = true;
+            _isUsingTemporaryGroup = true;
 
             // since we are getting our data from the temporary group, it should
             // already be in group order
-            this._group.IsDataInGroupOrder = true;
-            this._group.ActiveComparer = null;
+            _group.IsDataInGroupOrder = true;
+            _group.ActiveComparer = null;
 
-            if (this.GroupDescriptions.Count > 0)
+            if (GroupDescriptions.Count > 0)
             {
-                for (int num = 0, count = this.Count; num < count; ++num)
+                for (int num = 0, count = Count; num < count; ++num)
                 {
-                    object item = this.GetItemAt(num);
-                    if (item != null && (!this.IsAddingNew || !object.Equals(this.CurrentAddItem, item)))
+                    object item = GetItemAt(num);
+                    if (item != null && (!IsAddingNew || !Equals(CurrentAddItem, item)))
                     {
-                        this._group.AddToSubgroups(item, true /*loading*/);
+                        _group.AddToSubgroups(item, true /*loading*/);
                     }
                 }
-                if (this.IsAddingNew)
+                if (IsAddingNew)
                 {
-                    this._group.InsertSpecialItem(this._group.Items.Count, this.CurrentAddItem, true);
+                    _group.InsertSpecialItem(_group.Items.Count, CurrentAddItem, true);
                 }
             }
 
             // set flag to indicate that we do not need to access the temporary data any longer
-            this._isUsingTemporaryGroup = false;
+            _isUsingTemporaryGroup = false;
 
             // now we set the value to false, so that subsequent adds will insert
             // into the correct groups.
-            this._group.IsDataInGroupOrder = false;
+            _group.IsDataInGroupOrder = false;
 
             // reset the grouping comparer
-            this.PrepareGroupingComparer(this._group);
+            PrepareGroupingComparer(_group);
 
-            this._isGrouping = this._group.GroupBy != null;
+            _isGrouping = _group.GroupBy != null;
         }
 
         /// <summary>
@@ -3336,16 +3336,16 @@ namespace Twainsoft.PagedCollectionView.Data
 
             foreach (object item in enumerable)
             {
-                if (this.Filter == null || this.PassesFilter(item))
+                if (Filter == null || PassesFilter(item))
                 {
                     localList.Add(item);
                 }
             }
 
             // sort the local array
-            if (!this.CheckFlag(CollectionViewFlags.IsDataSorted) && this.SortDescriptions.Count > 0)
+            if (!CheckFlag(CollectionViewFlags.IsDataSorted) && SortDescriptions.Count > 0)
             {
-                localList = this.SortList(localList);
+                localList = SortList(localList);
             }
 
             return localList;
@@ -3356,85 +3356,85 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         /// <param name="addedItem">Item added to the source collection</param>
         /// <param name="addIndex">Index item was added into</param>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Handles multiple input types and scenarios")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Handles multiple input types and scenarios")]
         private void ProcessAddEvent(object addedItem, int addIndex)
         {
             // item to fire remove notification for if necessary
             object removeNotificationItem = null;
-            if (this.PageSize > 0 && !this.IsGrouping)
+            if (PageSize > 0 && !IsGrouping)
             {
-                removeNotificationItem = (this.Count == this.PageSize) ?
-                    this.GetItemAt(this.PageSize - 1) : null;
+                removeNotificationItem = (Count == PageSize) ?
+                    GetItemAt(PageSize - 1) : null;
             }
 
             // process the add by filtering and sorting the item
-            this.ProcessInsertToCollection(
+            ProcessInsertToCollection(
                 addedItem,
                 addIndex);
 
             // next check if we need to add an item into the current group
             bool needsGrouping = false;
-            if (this.Count == 1 && this.GroupDescriptions.Count > 0)
+            if (Count == 1 && GroupDescriptions.Count > 0)
             {
                 // if this is the first item being added
                 // we want to setup the groups with the
                 // correct element type comparer
-                if (this.PageSize > 0)
+                if (PageSize > 0)
                 {
-                    this.PrepareGroupingComparer(this._temporaryGroup);
+                    PrepareGroupingComparer(_temporaryGroup);
                 }
-                this.PrepareGroupingComparer(this._group);
+                PrepareGroupingComparer(_group);
             }
 
-            if (this.IsGrouping)
+            if (IsGrouping)
             {
                 int leafIndex = -1;
 
-                if (this.PageSize > 0)
+                if (PageSize > 0)
                 {
-                    this._temporaryGroup.AddToSubgroups(addedItem, false /*loading*/);
-                    leafIndex = this._temporaryGroup.LeafIndexOf(addedItem);
+                    _temporaryGroup.AddToSubgroups(addedItem, false /*loading*/);
+                    leafIndex = _temporaryGroup.LeafIndexOf(addedItem);
                 }
 
                 // if we are not paging, we should just be able to add the item.
                 // otherwise, we need to validate that it is within the current page.
-                if (this.PageSize == 0 || (this.PageIndex + 1) * this.PageSize > leafIndex)
+                if (PageSize == 0 || (PageIndex + 1) * PageSize > leafIndex)
                 {
                     needsGrouping = true;
 
-                    int pageStartIndex = this.PageIndex * this.PageSize;
+                    int pageStartIndex = PageIndex * PageSize;
 
                     // if the item was inserted on a previous page
-                    if (pageStartIndex > leafIndex && this.PageSize > 0)
+                    if (pageStartIndex > leafIndex && PageSize > 0)
                     {
-                        addedItem = this._temporaryGroup.LeafAt(pageStartIndex);
+                        addedItem = _temporaryGroup.LeafAt(pageStartIndex);
                     }
 
                     // if we're grouping and have more items than the 
                     // PageSize will allow, remove the last item
-                    if (this.PageSize > 0 && this._group.ItemCount == this.PageSize)
+                    if (PageSize > 0 && _group.ItemCount == PageSize)
                     {
-                        removeNotificationItem = this._group.LeafAt(this.PageSize - 1);
-                        this._group.RemoveFromSubgroups(removeNotificationItem);
+                        removeNotificationItem = _group.LeafAt(PageSize - 1);
+                        _group.RemoveFromSubgroups(removeNotificationItem);
                     }
                 }
             }
 
             // if we are paging, we may have to fire another notification for the item
             // that needs to be removed for the one we added on this page.
-            if (this.PageSize > 0 && !this.OnLastLocalPage &&
-               (((this.IsGrouping && removeNotificationItem != null) ||
-               (!this.IsGrouping && (this.PageIndex + 1) * this.PageSize > this.InternalIndexOf(addedItem)))))
+            if (PageSize > 0 && !OnLastLocalPage &&
+               (((IsGrouping && removeNotificationItem != null) ||
+               (!IsGrouping && (PageIndex + 1) * PageSize > InternalIndexOf(addedItem)))))
             {
                 if (removeNotificationItem != null && removeNotificationItem != addedItem)
                 {
-                    this.AdjustCurrencyForRemove(this.PageSize - 1);
+                    AdjustCurrencyForRemove(PageSize - 1);
 
-                    this.OnCollectionChanged(
+                    OnCollectionChanged(
                         new NotifyCollectionChangedEventArgs(
                             NotifyCollectionChangedAction.Remove,
                             removeNotificationItem,
-                            this.PageSize - 1));
+                            PageSize - 1));
                 }
             }
 
@@ -3442,41 +3442,41 @@ namespace Twainsoft.PagedCollectionView.Data
             // that will be displayed
             if (needsGrouping)
             {
-                this._group.AddToSubgroups(addedItem, false /*loading*/);
+                _group.AddToSubgroups(addedItem, false /*loading*/);
             }
 
-            int addedIndex = this.IndexOf(addedItem);
+            int addedIndex = IndexOf(addedItem);
 
             // if the item is within the current page
             if (addedIndex >= 0)
             {
-                object oldCurrentItem = this.CurrentItem;
-                int oldCurrentPosition = this.CurrentPosition;
-                bool oldIsCurrentAfterLast = this.IsCurrentAfterLast;
-                bool oldIsCurrentBeforeFirst = this.IsCurrentBeforeFirst;
+                object oldCurrentItem = CurrentItem;
+                int oldCurrentPosition = CurrentPosition;
+                bool oldIsCurrentAfterLast = IsCurrentAfterLast;
+                bool oldIsCurrentBeforeFirst = IsCurrentBeforeFirst;
 
-                this.AdjustCurrencyForAdd(null, addedIndex);
+                AdjustCurrencyForAdd(null, addedIndex);
 
                 // fire add notification
-                this.OnCollectionChanged(
+                OnCollectionChanged(
                     new NotifyCollectionChangedEventArgs(
                         NotifyCollectionChangedAction.Add,
                         addedItem,
                         addedIndex));
 
-                this.RaiseCurrencyChanges(false, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
+                RaiseCurrencyChanges(false, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
             }
-            else if (this.PageSize > 0)
+            else if (PageSize > 0)
             {
                 // otherwise if the item was added into a previous page
-                int internalIndex = this.IsGrouping ? this._group.LeafIndexOf(addedItem) : this.InternalIndexOf(addedItem);
-                if (internalIndex < this.ConvertToInternalIndex(0))
+                int internalIndex = IsGrouping ? _group.LeafIndexOf(addedItem) : InternalIndexOf(addedItem);
+                if (internalIndex < ConvertToInternalIndex(0))
                 {
                     // fire add notification for item pushed in
-                    this.OnCollectionChanged(
+                    OnCollectionChanged(
                         new NotifyCollectionChangedEventArgs(
                             NotifyCollectionChangedAction.Add,
-                            this.GetItemAt(0),
+                            GetItemAt(0),
                             0));
                 }
             }
@@ -3492,7 +3492,7 @@ namespace Twainsoft.PagedCollectionView.Data
         private void ProcessCollectionChanged(NotifyCollectionChangedEventArgs args)
         {
             // if we do not want to handle the CollectionChanged event, return
-            if (!this.CheckFlag(CollectionViewFlags.ShouldProcessCollectionChanged))
+            if (!CheckFlag(CollectionViewFlags.ShouldProcessCollectionChanged))
             {
                 return;
             }
@@ -3500,13 +3500,13 @@ namespace Twainsoft.PagedCollectionView.Data
             if (args.Action == NotifyCollectionChangedAction.Reset)
             {
                 // if we have no items now, clear our own internal list
-                if (!this.SourceCollection.GetEnumerator().MoveNext())
+                if (!SourceCollection.GetEnumerator().MoveNext())
                 {
-                    this._internalList.Clear();
+                    _internalList.Clear();
                 }
 
                 // calling Refresh, will fire the collectionchanged event
-                this.RefreshOrDefer();
+                RefreshOrDefer();
                 return;
             }
 
@@ -3517,19 +3517,19 @@ namespace Twainsoft.PagedCollectionView.Data
             if (args.Action == NotifyCollectionChangedAction.Remove ||
                 args.Action == NotifyCollectionChangedAction.Replace)
             {
-                this.ProcessRemoveEvent(removedItem, args.Action == NotifyCollectionChangedAction.Replace);
+                ProcessRemoveEvent(removedItem, args.Action == NotifyCollectionChangedAction.Replace);
             }
 
             // fire notifications for adds
             if ((args.Action == NotifyCollectionChangedAction.Add ||
                 args.Action == NotifyCollectionChangedAction.Replace) &&
-                (this.Filter == null || this.PassesFilter(addedItem)))
+                (Filter == null || PassesFilter(addedItem)))
             {
-                this.ProcessAddEvent(addedItem, args.NewStartingIndex);
+                ProcessAddEvent(addedItem, args.NewStartingIndex);
             }
             if (args.Action != NotifyCollectionChangedAction.Replace)
             {
-                this.OnPropertyChanged("ItemCount");
+                OnPropertyChanged("ItemCount");
             }
         }
 
@@ -3542,87 +3542,87 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             int internalRemoveIndex = -1;
 
-            if (this.IsGrouping)
+            if (IsGrouping)
             {
-                internalRemoveIndex = this.PageSize > 0 ? this._temporaryGroup.LeafIndexOf(removedItem) :
-                    this._group.LeafIndexOf(removedItem);
+                internalRemoveIndex = PageSize > 0 ? _temporaryGroup.LeafIndexOf(removedItem) :
+                    _group.LeafIndexOf(removedItem);
             }
             else
             {
-                internalRemoveIndex = this.InternalIndexOf(removedItem);
+                internalRemoveIndex = InternalIndexOf(removedItem);
             }
 
-            int removeIndex = this.IndexOf(removedItem);
+            int removeIndex = IndexOf(removedItem);
 
             // remove the item from the collection
-            this._internalList.Remove(removedItem);
+            _internalList.Remove(removedItem);
 
             // only fire the remove if it was removed from either the current page, or a previous page
-            bool needToRemove = (this.PageSize == 0 && removeIndex >= 0) || (internalRemoveIndex < (this.PageIndex + 1) * this.PageSize);
+            bool needToRemove = (PageSize == 0 && removeIndex >= 0) || (internalRemoveIndex < (PageIndex + 1) * PageSize);
 
-            if (this.IsGrouping)
+            if (IsGrouping)
             {
-                if (this.PageSize > 0)
+                if (PageSize > 0)
                 {
-                    this._temporaryGroup.RemoveFromSubgroups(removedItem);
+                    _temporaryGroup.RemoveFromSubgroups(removedItem);
                 }
 
                 if (needToRemove)
                 {
-                    this._group.RemoveFromSubgroups(removeIndex >= 0 ? removedItem : this._group.LeafAt(0));
+                    _group.RemoveFromSubgroups(removeIndex >= 0 ? removedItem : _group.LeafAt(0));
                 }
             }
 
             if (needToRemove)
             {
-                object oldCurrentItem = this.CurrentItem;
-                int oldCurrentPosition = this.CurrentPosition;
-                bool oldIsCurrentAfterLast = this.IsCurrentAfterLast;
-                bool oldIsCurrentBeforeFirst = this.IsCurrentBeforeFirst;
+                object oldCurrentItem = CurrentItem;
+                int oldCurrentPosition = CurrentPosition;
+                bool oldIsCurrentAfterLast = IsCurrentAfterLast;
+                bool oldIsCurrentBeforeFirst = IsCurrentBeforeFirst;
 
-                this.AdjustCurrencyForRemove(removeIndex);
+                AdjustCurrencyForRemove(removeIndex);
 
                 // fire remove notification 
                 // if we removed from current page, remove from removeIndex,
                 // if we removed from previous page, remove first item (index=0)
-                this.OnCollectionChanged(
+                OnCollectionChanged(
                     new NotifyCollectionChangedEventArgs(
                         NotifyCollectionChangedAction.Remove,
                         removedItem,
                         Math.Max(0, removeIndex)));
 
-                this.RaiseCurrencyChanges(false, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
+                RaiseCurrencyChanges(false, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
 
                 // if we removed all items from the current page,
                 // move to the previous page. we do not need to 
                 // fire additional notifications, as moving the page will
                 // trigger a reset.
-                if (this.NeedToMoveToPreviousPage && !isReplace)
+                if (NeedToMoveToPreviousPage && !isReplace)
                 {
-                    this.MoveToPreviousPage();
+                    MoveToPreviousPage();
                     return;
                 }
 
                 // if we are paging, we may have to fire another notification for the item
                 // that needs to replace the one we removed on this page.
-                if (this.PageSize > 0 && this.Count == this.PageSize)
+                if (PageSize > 0 && Count == PageSize)
                 {
                     // we first need to add the item into the current group
-                    if (this.IsGrouping)
+                    if (IsGrouping)
                     {
-                        object newItem = this._temporaryGroup.LeafAt((this.PageSize * (this.PageIndex + 1)) - 1);
+                        object newItem = _temporaryGroup.LeafAt((PageSize * (PageIndex + 1)) - 1);
                         if (newItem != null)
                         {
-                            this._group.AddToSubgroups(newItem, false /*loading*/);
+                            _group.AddToSubgroups(newItem, false /*loading*/);
                         }
                     }
 
                     // fire the add notification
-                    this.OnCollectionChanged(
+                    OnCollectionChanged(
                         new NotifyCollectionChangedEventArgs(
                             NotifyCollectionChangedAction.Add,
-                            this.GetItemAt(this.PageSize - 1),
-                            this.PageSize - 1));
+                            GetItemAt(PageSize - 1),
+                            PageSize - 1));
                 }
             }
         }
@@ -3635,9 +3635,9 @@ namespace Twainsoft.PagedCollectionView.Data
         private void ProcessInsertToCollection(object item, int index)
         {
             // first check to see if it passes the filter
-            if (this.Filter == null || this.PassesFilter(item))
+            if (Filter == null || PassesFilter(item))
             {
-                if (this.SortDescriptions.Count > 0)
+                if (SortDescriptions.Count > 0)
                 {
                     // create the SortFieldComparer to use
                     SortFieldComparer sortFieldComparer = new SortFieldComparer(this);
@@ -3645,10 +3645,10 @@ namespace Twainsoft.PagedCollectionView.Data
                     // check if the item would be in sorted order if inserted into the specified index
                     // otherwise, calculate the correct sorted index
                     if (index < 0 || /* if item was not originally part of list */
-                        (index > 0 && (sortFieldComparer.Compare(item, this.InternalItemAt(index - 1)) < 0)) || /* item has moved up in the list */
-                        ((index < this.InternalList.Count - 1) && (sortFieldComparer.Compare(item, this.InternalItemAt(index)) > 0))) /* item has moved down in the list */
+                        (index > 0 && (sortFieldComparer.Compare(item, InternalItemAt(index - 1)) < 0)) || /* item has moved up in the list */
+                        ((index < InternalList.Count - 1) && (sortFieldComparer.Compare(item, InternalItemAt(index)) > 0))) /* item has moved down in the list */
                     {
-                        index = sortFieldComparer.FindInsertIndex(item, this._internalList);
+                        index = sortFieldComparer.FindInsertIndex(item, _internalList);
                     }
                 }
 
@@ -3656,12 +3656,12 @@ namespace Twainsoft.PagedCollectionView.Data
                 // otherwise, just add it to the end. the index can be set to an invalid
                 // value if the item was originally not in the collection, on a different
                 // page, or if it had been previously filtered out.
-                if (index < 0 || index > this._internalList.Count)
+                if (index < 0 || index > _internalList.Count)
                 {
-                    index = this._internalList.Count;
+                    index = _internalList.Count;
                 }
 
-                this._internalList.Insert(index, item);
+                _internalList.Insert(index, item);
             }
         }
 
@@ -3676,25 +3676,25 @@ namespace Twainsoft.PagedCollectionView.Data
         private void RaiseCurrencyChanges(bool fireChangedEvent, object oldCurrentItem, int oldCurrentPosition, bool oldIsCurrentBeforeFirst, bool oldIsCurrentAfterLast)
         {
             // fire events for currency changes
-            if (fireChangedEvent || this.CurrentItem != oldCurrentItem || this.CurrentPosition != oldCurrentPosition)
+            if (fireChangedEvent || CurrentItem != oldCurrentItem || CurrentPosition != oldCurrentPosition)
             {
-                this.OnCurrentChanged();
+                OnCurrentChanged();
             }
-            if (this.CurrentItem != oldCurrentItem)
+            if (CurrentItem != oldCurrentItem)
             {
-                this.OnPropertyChanged("CurrentItem");
+                OnPropertyChanged("CurrentItem");
             }
-            if (this.CurrentPosition != oldCurrentPosition)
+            if (CurrentPosition != oldCurrentPosition)
             {
-                this.OnPropertyChanged("CurrentPosition");
+                OnPropertyChanged("CurrentPosition");
             }
-            if (this.IsCurrentAfterLast != oldIsCurrentAfterLast)
+            if (IsCurrentAfterLast != oldIsCurrentAfterLast)
             {
-                this.OnPropertyChanged("IsCurrentAfterLast");
+                OnPropertyChanged("IsCurrentAfterLast");
             }
-            if (this.IsCurrentBeforeFirst != oldIsCurrentBeforeFirst)
+            if (IsCurrentBeforeFirst != oldIsCurrentBeforeFirst)
             {
-                this.OnPropertyChanged("IsCurrentBeforeFirst");
+                OnPropertyChanged("IsCurrentBeforeFirst");
             }
 
             RaiseOwnPropertyChangedEvents();
@@ -3705,7 +3705,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private void RaisePageChanged()
         {
-            EventHandler<EventArgs> handler = this.PageChanged;
+            EventHandler<EventArgs> handler = PageChanged;
             if (handler != null)
             {
                 handler(this, EventArgs.Empty);
@@ -3763,7 +3763,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>True if the event is cancelled (e.Cancel was set to True), False otherwise</returns>
         private bool RaisePageChanging(int newPageIndex)
         {
-            EventHandler<PageChangingEventArgs> handler = this.PageChanging;
+            EventHandler<PageChangingEventArgs> handler = PageChanging;
             if (handler != null)
             {
                 PageChangingEventArgs pageChangingEventArgs = new PageChangingEventArgs(newPageIndex);
@@ -3779,8 +3779,8 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private void RefreshInternal()
         {
-            this.RefreshOverride();
-            this.SetFlag(CollectionViewFlags.NeedsRefresh, false);
+            RefreshOverride();
+            SetFlag(CollectionViewFlags.NeedsRefresh, false);
         }
 
         /// <summary>
@@ -3788,13 +3788,13 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         private void RefreshOrDefer()
         {
-            if (this.IsRefreshDeferred)
+            if (IsRefreshDeferred)
             {
-                this.SetFlag(CollectionViewFlags.NeedsRefresh, true);
+                SetFlag(CollectionViewFlags.NeedsRefresh, true);
             }
             else
             {
-                this.RefreshInternal();
+                RefreshInternal();
             }
         }
 
@@ -3802,37 +3802,37 @@ namespace Twainsoft.PagedCollectionView.Data
         /// Re-create the view, using any SortDescriptions. 
         /// Also updates currency information.
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Handles multiple input types and scenarios")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Handles multiple input types and scenarios")]
         private void RefreshOverride()
         {
-            object oldCurrentItem = this.CurrentItem;
-            int oldCurrentPosition = this.CurrentPosition;
-            bool oldIsCurrentAfterLast = this.IsCurrentAfterLast;
-            bool oldIsCurrentBeforeFirst = this.IsCurrentBeforeFirst;
+            object oldCurrentItem = CurrentItem;
+            int oldCurrentPosition = CurrentPosition;
+            bool oldIsCurrentAfterLast = IsCurrentAfterLast;
+            bool oldIsCurrentBeforeFirst = IsCurrentBeforeFirst;
 
             // set IsGrouping to false
-            this._isGrouping = false;
+            _isGrouping = false;
 
             // force currency off the collection (gives user a chance to save dirty information)
-            this.OnCurrentChanging();
+            OnCurrentChanging();
 
             // if there's no sort/filter/paging/grouping, just use the collection's array
-            if (this.UsesLocalArray)
+            if (UsesLocalArray)
             {
                 try
                 {
                     // apply filtering/sorting through the PrepareLocalArray method
-                    this._internalList = (IList)this.PrepareLocalArray(this._sourceCollection);
+                    _internalList = (IList)PrepareLocalArray(_sourceCollection);
 
                     // apply grouping
-                    if (this.PageSize == 0)
+                    if (PageSize == 0)
                     {
-                        this.PrepareGroups();
+                        PrepareGroups();
                     }
                     else
                     {
-                        this.PrepareTemporaryGroups();
-                        this.PrepareGroupsForCurrentPage();
+                        PrepareTemporaryGroups();
+                        PrepareGroupsForCurrentPage();
                     }
                 }
                 catch (TargetInvocationException e)
@@ -3851,26 +3851,26 @@ namespace Twainsoft.PagedCollectionView.Data
             }
             else
             {
-                this.CopySourceToInternalList();
+                CopySourceToInternalList();
             }
 
             // check if PageIndex is still valid after filter/sort
-            if (this.PageSize > 0 &&
-                this.PageIndex > 0 &&
-                this.PageIndex >= this.PageCount)
+            if (PageSize > 0 &&
+                PageIndex > 0 &&
+                PageIndex >= PageCount)
             {
-                this.MoveToPage(this.PageCount - 1);
+                MoveToPage(PageCount - 1);
             }
 
             // reset currency values
-            this.ResetCurrencyValues(oldCurrentItem, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
+            ResetCurrencyValues(oldCurrentItem, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
 
-            this.OnCollectionChanged(
+            OnCollectionChanged(
                 new NotifyCollectionChangedEventArgs(
                     NotifyCollectionChangedAction.Reset));
 
             // now raise currency changes at the end
-            this.RaiseCurrencyChanges(false, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
+            RaiseCurrencyChanges(false, oldCurrentItem, oldCurrentPosition, oldIsCurrentBeforeFirst, oldIsCurrentAfterLast);
         }
 
         /// <summary>
@@ -3882,19 +3882,19 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="oldIsCurrentAfterLast">IsCurrentAfterLast before processing changes</param>
         private void ResetCurrencyValues(object oldCurrentItem, bool oldIsCurrentBeforeFirst, bool oldIsCurrentAfterLast)
         {
-            if (oldIsCurrentBeforeFirst || this.IsEmpty)
+            if (oldIsCurrentBeforeFirst || IsEmpty)
             {
-                this.SetCurrent(null, -1);
+                SetCurrent(null, -1);
             }
             else if (oldIsCurrentAfterLast)
             {
-                this.SetCurrent(null, this.Count);
+                SetCurrent(null, Count);
             }
             else
             {
                 // try to set currency back to old current item
                 // if there are duplicates, use the position of the first matching item
-                int newPosition = this.IndexOf(oldCurrentItem);
+                int newPosition = IndexOf(oldCurrentItem);
 
                 // if the old current item is no longer in view
                 if (newPosition < 0)
@@ -3902,22 +3902,22 @@ namespace Twainsoft.PagedCollectionView.Data
                     // if we are adding a new item, set it as the current item, otherwise, set it to null
                     newPosition = 0;
 
-                    if (newPosition < this.Count)
+                    if (newPosition < Count)
                     {
-                        this.SetCurrent(this.GetItemAt(newPosition), newPosition);
+                        SetCurrent(GetItemAt(newPosition), newPosition);
                     }
-                    else if (!this.IsEmpty)
+                    else if (!IsEmpty)
                     {
-                        this.SetCurrent(this.GetItemAt(0), 0);
+                        SetCurrent(GetItemAt(0), 0);
                     }
                     else
                     {
-                        this.SetCurrent(null, -1);
+                        SetCurrent(null, -1);
                     }
                 }
                 else
                 {
-                    this.SetCurrent(oldCurrentItem, newPosition);
+                    SetCurrent(oldCurrentItem, newPosition);
                 }
             }
         }
@@ -3933,8 +3933,8 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="newPosition">New CurrentPosition</param>
         private void SetCurrent(object newItem, int newPosition)
         {
-            int count = (newItem != null) ? 0 : (this.IsEmpty ? 0 : this.Count);
-            this.SetCurrent(newItem, newPosition, count);
+            int count = (newItem != null) ? 0 : (IsEmpty ? 0 : Count);
+            SetCurrent(newItem, newPosition, count);
         }
 
         /// <summary>
@@ -3957,25 +3957,25 @@ namespace Twainsoft.PagedCollectionView.Data
             {
                 // non-null item implies position is within range.
                 // We ignore count - it's just a placeholder
-                this.SetFlag(CollectionViewFlags.IsCurrentBeforeFirst, false);
-                this.SetFlag(CollectionViewFlags.IsCurrentAfterLast, false);
+                SetFlag(CollectionViewFlags.IsCurrentBeforeFirst, false);
+                SetFlag(CollectionViewFlags.IsCurrentAfterLast, false);
             }
             else if (count == 0)
             {
                 // empty collection - by convention both flags are true and position is -1
-                this.SetFlag(CollectionViewFlags.IsCurrentBeforeFirst, true);
-                this.SetFlag(CollectionViewFlags.IsCurrentAfterLast, true);
+                SetFlag(CollectionViewFlags.IsCurrentBeforeFirst, true);
+                SetFlag(CollectionViewFlags.IsCurrentAfterLast, true);
                 newPosition = -1;
             }
             else
             {
                 // null item, possibly within range.
-                this.SetFlag(CollectionViewFlags.IsCurrentBeforeFirst, newPosition < 0);
-                this.SetFlag(CollectionViewFlags.IsCurrentAfterLast, newPosition >= count);
+                SetFlag(CollectionViewFlags.IsCurrentBeforeFirst, newPosition < 0);
+                SetFlag(CollectionViewFlags.IsCurrentAfterLast, newPosition >= count);
             }
 
-            this._currentItem = newItem;
-            this._currentPosition = newPosition;
+            _currentItem = newItem;
+            _currentPosition = newPosition;
         }
 
         /// <summary>
@@ -3986,18 +3986,18 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             if (position < 0)
             {
-                this.SetFlag(CollectionViewFlags.IsCurrentBeforeFirst, true);
-                this.SetCurrent(null, -1);
+                SetFlag(CollectionViewFlags.IsCurrentBeforeFirst, true);
+                SetCurrent(null, -1);
             }
-            else if (position >= this.Count)
+            else if (position >= Count)
             {
-                this.SetFlag(CollectionViewFlags.IsCurrentAfterLast, true);
-                this.SetCurrent(null, this.Count);
+                SetFlag(CollectionViewFlags.IsCurrentAfterLast, true);
+                SetCurrent(null, Count);
             }
             else
             {
-                this.SetFlag(CollectionViewFlags.IsCurrentBeforeFirst | CollectionViewFlags.IsCurrentAfterLast, false);
-                this.SetCurrent(this.GetItemAt(position), position);
+                SetFlag(CollectionViewFlags.IsCurrentBeforeFirst | CollectionViewFlags.IsCurrentAfterLast, false);
+                SetCurrent(GetItemAt(position), position);
             }
         }
 
@@ -4010,11 +4010,11 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             if (value)
             {
-                this._flags = this._flags | flags;
+                _flags = _flags | flags;
             }
             else
             {
-                this._flags = this._flags & ~flags;
+                _flags = _flags & ~flags;
             }
         }
 
@@ -4024,17 +4024,17 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="descriptions">SortDescriptionCollection to set the property value to</param>
         private void SetSortDescriptions(SortDescriptionCollection descriptions)
         {
-            if (this._sortDescriptions != null)
+            if (_sortDescriptions != null)
             {
-                ((INotifyCollectionChanged)this._sortDescriptions).CollectionChanged -= new NotifyCollectionChangedEventHandler(this.SortDescriptionsChanged);
+                ((INotifyCollectionChanged)_sortDescriptions).CollectionChanged -= new NotifyCollectionChangedEventHandler(SortDescriptionsChanged);
             }
 
-            this._sortDescriptions = descriptions;
+            _sortDescriptions = descriptions;
 
-            if (this._sortDescriptions != null)
+            if (_sortDescriptions != null)
             {
-                Debug.Assert(this._sortDescriptions.Count == 0, "must be empty SortDescription collection");
-                ((INotifyCollectionChanged)this._sortDescriptions).CollectionChanged += new NotifyCollectionChangedEventHandler(this.SortDescriptionsChanged);
+                Debug.Assert(_sortDescriptions.Count == 0, "must be empty SortDescription collection");
+                ((INotifyCollectionChanged)_sortDescriptions).CollectionChanged += new NotifyCollectionChangedEventHandler(SortDescriptionsChanged);
             }
         }
 
@@ -4045,30 +4045,30 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="e">NotifyCollectionChangedEventArgs for this change</param>
         private void SortDescriptionsChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if (this.IsAddingNew || this.IsEditingItem)
+            if (IsAddingNew || IsEditingItem)
             {
                 throw new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, PagedCollectionViewResources.OperationNotAllowedDuringAddOrEdit, "Sorting"));
             }
 
             // we want to make sure that the data is refreshed before we try to move to a page
             // since the refresh would take care of the filtering, sorting, and grouping.
-            this.RefreshOrDefer();
+            RefreshOrDefer();
 
-            if (this.PageSize > 0)
+            if (PageSize > 0)
             {
-                if (this.IsRefreshDeferred)
+                if (IsRefreshDeferred)
                 {
                     // set cached value and flag so that we move to first page on EndDefer
-                    this._cachedPageIndex = 0;
-                    this.SetFlag(CollectionViewFlags.IsMoveToPageDeferred, true);
+                    _cachedPageIndex = 0;
+                    SetFlag(CollectionViewFlags.IsMoveToPageDeferred, true);
                 }
                 else
                 {
-                    this.MoveToFirstPage();
+                    MoveToFirstPage();
                 }
             }
 
-            this.OnPropertyChanged("SortDescriptions");
+            OnPropertyChanged("SortDescriptions");
         }
 
         /// <summary>
@@ -4081,9 +4081,9 @@ namespace Twainsoft.PagedCollectionView.Data
             Debug.Assert(list != null, "Input list to sort should not be null");
 
             IEnumerable<object> seq = (IEnumerable<object>)list;
-            IComparer<object> comparer = new CultureSensitiveComparer(this.Culture);
+            IComparer<object> comparer = new CultureSensitiveComparer(Culture);
 
-            foreach (SortDescription sort in this.SortDescriptions)
+            foreach (SortDescription sort in SortDescriptions)
             {
                 string propertyPath = sort.PropertyName;
                 Type propertyType = null;
@@ -4103,7 +4103,7 @@ namespace Twainsoft.PagedCollectionView.Data
 
                 switch (sort.Direction)
                 {
-                    case System.ComponentModel.ListSortDirection.Ascending:
+                    case ListSortDirection.Ascending:
                         if (orderedEnum != null)
                         {
                             // thenby
@@ -4116,7 +4116,7 @@ namespace Twainsoft.PagedCollectionView.Data
                         }
 
                         break;
-                    case System.ComponentModel.ListSortDirection.Descending:
+                    case ListSortDirection.Descending:
                         if (orderedEnum != null)
                         {
                             // thenby
@@ -4146,7 +4146,7 @@ namespace Twainsoft.PagedCollectionView.Data
             // If the Refresh is being deferred to change filtering or sorting of the
             // data by this PagedCollectionView, then PagedCollectionView will not reflect the correct
             // state of the underlying data.
-            if (this.IsRefreshDeferred)
+            if (IsRefreshDeferred)
             {
                 throw new InvalidOperationException(PagedCollectionViewResources.NoCheckOrChangeWhenDeferred);
             }
@@ -4181,7 +4181,7 @@ namespace Twainsoft.PagedCollectionView.Data
             public CultureSensitiveComparer(CultureInfo culture)
                 : base()
             {
-                this._culture = culture ?? CultureInfo.InvariantCulture;
+                _culture = culture ?? CultureInfo.InvariantCulture;
             }
 
             #region IComparer<object> Members
@@ -4213,7 +4213,7 @@ namespace Twainsoft.PagedCollectionView.Data
                 // at this point x and y are not null
                 if (x.GetType() == typeof(string) && y.GetType() == typeof(string))
                 {
-                    return this._culture.CompareInfo.Compare((string)x, (string)y);
+                    return _culture.CompareInfo.Compare((string)x, (string)y);
                 }
                 else
                 {
@@ -4251,10 +4251,10 @@ namespace Twainsoft.PagedCollectionView.Data
             /// </summary>
             public void Dispose()
             {
-                if (this.collectionView != null)
+                if (collectionView != null)
                 {
-                    this.collectionView.EndDefer();
-                    this.collectionView = null;
+                    collectionView.EndDefer();
+                    collectionView = null;
                 }
                 GC.SuppressFinalize(this);
             }
@@ -4275,7 +4275,7 @@ namespace Twainsoft.PagedCollectionView.Data
             /// </summary>
             public bool Busy
             {
-                get { return this.entered; }
+                get { return entered; }
             }
 
             /// <summary>
@@ -4284,12 +4284,12 @@ namespace Twainsoft.PagedCollectionView.Data
             /// <returns>Boolean value indicating whether we were already entered</returns>
             public bool Enter()
             {
-                if (this.entered)
+                if (entered)
                 {
                     return false;
                 }
 
-                this.entered = true;
+                entered = true;
                 return true;
             }
 
@@ -4298,7 +4298,7 @@ namespace Twainsoft.PagedCollectionView.Data
             /// </summary>
             public void Dispose()
             {
-                this.entered = false;
+                entered = false;
                 GC.SuppressFinalize(this);
             }
         }
@@ -4334,10 +4334,10 @@ namespace Twainsoft.PagedCollectionView.Data
             /// <param name="newItem">The new item we are adding to the collection</param>
             public NewItemAwareEnumerator(PagedCollectionView collectionView, IEnumerator baseEnumerator, object newItem)
             {
-                this._collectionView = collectionView;
-                this._timestamp = collectionView.Timestamp;
-                this._baseEnumerator = baseEnumerator;
-                this._newItem = newItem;
+                _collectionView = collectionView;
+                _timestamp = collectionView.Timestamp;
+                _baseEnumerator = baseEnumerator;
+                _newItem = newItem;
             }
 
             /// <summary>
@@ -4351,19 +4351,19 @@ namespace Twainsoft.PagedCollectionView.Data
                 //    throw new InvalidOperationException(PagedCollectionViewResources.EnumeratorVersionChanged);
                 //}
 
-                switch (this._position)
+                switch (_position)
                 {
                     case Position.BeforeNewItem:
-                        if (this._baseEnumerator.MoveNext() &&
-                                    (this._newItem == null || this._baseEnumerator.Current != this._newItem
-                                            || this._baseEnumerator.MoveNext()))
+                        if (_baseEnumerator.MoveNext() &&
+                                    (_newItem == null || _baseEnumerator.Current != _newItem
+                                            || _baseEnumerator.MoveNext()))
                         {
                             // advance base, skipping the new item
                         }
-                        else if (this._newItem != null)
+                        else if (_newItem != null)
                         {
                             // if base has reached the end, move to new item
-                            this._position = Position.OnNewItem;
+                            _position = Position.OnNewItem;
                         }
                         else
                         {
@@ -4373,11 +4373,11 @@ namespace Twainsoft.PagedCollectionView.Data
                 }
 
                 // in all other cases, simply advance base, skipping the new item
-                this._position = Position.AfterNewItem;
-                return this._baseEnumerator.MoveNext() &&
-                    (this._newItem == null
-                        || this._baseEnumerator.Current != this._newItem
-                        || this._baseEnumerator.MoveNext());
+                _position = Position.AfterNewItem;
+                return _baseEnumerator.MoveNext() &&
+                    (_newItem == null
+                        || _baseEnumerator.Current != _newItem
+                        || _baseEnumerator.MoveNext());
             }
 
             /// <summary>
@@ -4387,7 +4387,7 @@ namespace Twainsoft.PagedCollectionView.Data
             {
                 get
                 {
-                    return (this._position == Position.OnNewItem) ? this._newItem : this._baseEnumerator.Current;
+                    return (_position == Position.OnNewItem) ? _newItem : _baseEnumerator.Current;
                 }
             }
 
@@ -4396,8 +4396,8 @@ namespace Twainsoft.PagedCollectionView.Data
             /// </summary>
             public void Reset()
             {
-                this._position = Position.BeforeNewItem;
-                this._baseEnumerator.Reset();
+                _position = Position.BeforeNewItem;
+                _baseEnumerator.Reset();
             }
 
             /// <summary>
@@ -4442,10 +4442,10 @@ namespace Twainsoft.PagedCollectionView.Data
             /// <param name="collectionView">CollectionView that contains list of property names and direction to sort by</param>
             public SortFieldComparer(ICollectionView collectionView)
             {
-                this._collectionView = collectionView;
-                this._sortFields = collectionView.SortDescriptions;
-                this._fields = CreatePropertyInfo(this._sortFields);
-                this._comparer = new CultureSensitiveComparer(collectionView.Culture);
+                _collectionView = collectionView;
+                _sortFields = collectionView.SortDescriptions;
+                _fields = CreatePropertyInfo(_sortFields);
+                _comparer = new CultureSensitiveComparer(collectionView.Culture);
             }
 
             #endregion
@@ -4466,48 +4466,48 @@ namespace Twainsoft.PagedCollectionView.Data
                 int result = 0;
 
                 // compare both objects by each of the properties until property values don't match
-                for (int k = 0; k < this._fields.Length; ++k)
+                for (int k = 0; k < _fields.Length; ++k)
                 {
                     // if the property type is not yet determined, try
                     // obtaining it from the objects
-                    Type propertyType = this._fields[k].PropertyType;
+                    Type propertyType = _fields[k].PropertyType;
                     if (propertyType == null)
                     {
                         if (x != null)
                         {
-                            this._fields[k].PropertyType = x.GetType().GetNestedPropertyType(this._fields[k].PropertyPath);
-                            propertyType = this._fields[k].PropertyType;
+                            _fields[k].PropertyType = x.GetType().GetNestedPropertyType(_fields[k].PropertyPath);
+                            propertyType = _fields[k].PropertyType;
                         }
-                        if (this._fields[k].PropertyType == null && y != null)
+                        if (_fields[k].PropertyType == null && y != null)
                         {
-                            this._fields[k].PropertyType = y.GetType().GetNestedPropertyType(this._fields[k].PropertyPath);
-                            propertyType = this._fields[k].PropertyType;
+                            _fields[k].PropertyType = y.GetType().GetNestedPropertyType(_fields[k].PropertyPath);
+                            propertyType = _fields[k].PropertyType;
                         }
                     }
 
-                    object v1 = this._fields[k].GetValue(x);
-                    object v2 = this._fields[k].GetValue(y);
+                    object v1 = _fields[k].GetValue(x);
+                    object v2 = _fields[k].GetValue(y);
 
                     // this will handle the case with string comparisons
                     if (propertyType == typeof(string))
                     {
-                        result = this._comparer.Compare(v1, v2);
+                        result = _comparer.Compare(v1, v2);
                     }
                     else
                     {
                         // try to also set the value for the comparer if this was 
                         // not already calculated
-                        IComparer comparer = this._fields[k].Comparer;
+                        IComparer comparer = _fields[k].Comparer;
                         if (propertyType != null && comparer == null)
                         {
-                            this._fields[k].Comparer = (typeof(Comparer<>).MakeGenericType(propertyType).GetProperty("Default")).GetValue(null, null) as IComparer;
-                            comparer = this._fields[k].Comparer;
+                            _fields[k].Comparer = (typeof(Comparer<>).MakeGenericType(propertyType).GetProperty("Default")).GetValue(null, null) as IComparer;
+                            comparer = _fields[k].Comparer;
                         }
 
                         result = (comparer != null) ? comparer.Compare(v1, v2) : 0 /*both values equal*/;
                     }
 
-                    if (this._fields[k].Descending)
+                    if (_fields[k].Descending)
                     {
                         result = -result;
                     }
@@ -4540,7 +4540,7 @@ namespace Twainsoft.PagedCollectionView.Data
                 {
                     index = (min + max) / 2;
 
-                    int result = this.Compare(x, list[index]);
+                    int result = Compare(x, list[index]);
                     if (result == 0)
                     {
                         return index;
@@ -4588,13 +4588,13 @@ namespace Twainsoft.PagedCollectionView.Data
                 internal object GetValue(object o)
                 {
                     object value;
-                    if (String.IsNullOrEmpty(this.PropertyPath))
+                    if (String.IsNullOrEmpty(PropertyPath))
                     {
-                        value = (this.PropertyType == o.GetType()) ? o : null;
+                        value = (PropertyType == o.GetType()) ? o : null;
                     }
                     else
                     {
-                        value = PagedCollectionView.InvokePath(o, this.PropertyPath, this.PropertyType);
+                        value = InvokePath(o, PropertyPath, PropertyType);
                     }
 
                     return value;

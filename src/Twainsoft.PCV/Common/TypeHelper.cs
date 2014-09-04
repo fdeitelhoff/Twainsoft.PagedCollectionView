@@ -11,9 +11,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
-using Twainsoft.PagedCollectionView.ComponentModel;
+using Twainsoft.PCV.ComponentModel;
 
-namespace Twainsoft.PagedCollectionView.Common
+namespace Twainsoft.PCV.Common
 {
     /// <summary>
     /// Utility class for Type related operations
@@ -110,7 +110,7 @@ namespace Twainsoft.PagedCollectionView.Common
                 if (!propertyInfo.CanRead)
                 {
                     exception = new InvalidOperationException(string.Format(
-                        System.Globalization.CultureInfo.InvariantCulture,
+                        CultureInfo.InvariantCulture,
                         PagedCollectionViewResources.PropertyNotReadable,
                         propertyNames[i],
                         type.GetTypeName()));

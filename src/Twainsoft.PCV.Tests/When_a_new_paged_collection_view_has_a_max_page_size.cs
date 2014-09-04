@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
 using FluentAssertions;
 using Machine.Specifications;
+using Twainsoft.PCV.Data;
 
-namespace Twainsoft.PagedCollectionView.Tests
+namespace Twainsoft.PCV.Tests
 {
-    [Subject(typeof(Data.PagedCollectionView), "Paging")]
+    [Subject(typeof(PagedCollectionView), "Paging")]
     public class When_a_new_paged_collection_view_has_a_max_page_size
     {
-        static Data.PagedCollectionView result;
+        static PagedCollectionView result;
         static IEnumerable<string> input;
 
         Establish context = () =>
@@ -16,7 +17,7 @@ namespace Twainsoft.PagedCollectionView.Tests
         };
 
         Because of =
-            () => result = new Data.PagedCollectionView(input) {PageSize = 3};
+            () => result = new PagedCollectionView(input) {PageSize = 3};
 
         It should_have_two_pages =
             () => result.PageCount.Should().Be(3);

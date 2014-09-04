@@ -9,7 +9,7 @@
 
 using System;
 
-namespace Twainsoft.PagedCollectionView.ComponentModel
+namespace Twainsoft.PCV.ComponentModel
 {
     /// <summary>
     /// Interface used to drive paging of collection views.

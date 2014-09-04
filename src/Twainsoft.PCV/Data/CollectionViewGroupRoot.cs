@@ -16,7 +16,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows.Data;
 
-namespace Twainsoft.PagedCollectionView.Data
+namespace Twainsoft.PCV.Data
 {
     /// <summary>
     /// PagedCollectionView classes use this class as the manager 
@@ -91,8 +91,8 @@ namespace Twainsoft.PagedCollectionView.Data
         internal CollectionViewGroupRoot(ICollectionView view, bool isDataInGroupOrder)
             : base(RootName, null)
         {
-            this._view = view;
-            this._isDataInGroupOrder = isDataInGroupOrder;
+            _view = view;
+            _isDataInGroupOrder = isDataInGroupOrder;
         }
 
         #endregion Constructors
@@ -136,7 +136,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         public virtual ObservableCollection<GroupDescription> GroupDescriptions
         {
-            get { return this._groupBy; }
+            get { return _groupBy; }
         }
 
         #endregion Public Properties
@@ -161,8 +161,8 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             get
             {
-                Debug.Assert(this._view != null, "this._view should have been set from the constructor");
-                return this._view.Culture;
+                Debug.Assert(_view != null, "this._view should have been set from the constructor");
+                return _view.Culture;
             }
         }
 
@@ -171,8 +171,8 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         internal bool IsDataInGroupOrder
         {
-            get { return this._isDataInGroupOrder; }
-            set { this._isDataInGroupOrder = value; }
+            get { return _isDataInGroupOrder; }
+            set { _isDataInGroupOrder = value; }
         }
 
         #endregion Internal Properties
@@ -192,7 +192,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="loading">Whether we are currently loading</param>
         internal void AddToSubgroups(object item, bool loading)
         {
-            this.AddToSubgroups(item, this, 0, loading);
+            AddToSubgroups(item, this, 0, loading);
         }
 
         /// <summary>
@@ -207,7 +207,7 @@ namespace Twainsoft.PagedCollectionView.Data
         protected override int FindIndex(object item, object seed, IComparer comparer, int low, int high)
         {
             // root group needs to adjust the bounds of the search to exclude the new item (if any)
-            IEditableCollectionView iecv = this._view as IEditableCollectionView;
+            IEditableCollectionView iecv = _view as IEditableCollectionView;
             if (iecv != null && iecv.IsAddingNew)
             {
                 --high;
@@ -226,7 +226,7 @@ namespace Twainsoft.PagedCollectionView.Data
                 topLevelGroupDescription = new TopLevelGroupDescription();
             }
 
-            this.InitializeGroup(this, 0, null);
+            InitializeGroup(this, 0, null);
         }
 
         /// <summary>
@@ -237,13 +237,13 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="loading">Whether we are currently loading</param>
         internal void InsertSpecialItem(int index, object item, bool loading)
         {
-            this.ChangeCounts(item, +1);
-            this.ProtectedItems.Insert(index, item);
+            ChangeCounts(item, +1);
+            ProtectedItems.Insert(index, item);
 
             if (!loading)
             {
-                int globalIndex = this.LeafIndexFromItem(item, index);
-                this.OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item, globalIndex));
+                int globalIndex = LeafIndexFromItem(item, index);
+                OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item, globalIndex));
             }
         }
 
@@ -259,9 +259,9 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             Debug.Assert(args != null, "Arguments passed in should not be null");
 
-            if (this.CollectionChanged != null)
+            if (CollectionChanged != null)
             {
-                this.CollectionChanged(this, args);
+                CollectionChanged(this, args);
             }
         }
 
@@ -270,9 +270,9 @@ namespace Twainsoft.PagedCollectionView.Data
         /// </summary>
         protected override void OnGroupByChanged()
         {
-            if (this.GroupDescriptionChanged != null)
+            if (GroupDescriptionChanged != null)
             {
-                this.GroupDescriptionChanged(this, EventArgs.Empty);
+                GroupDescriptionChanged(this, EventArgs.Empty);
             }
         }
 
@@ -283,7 +283,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <returns>Whether the operation was successful</returns>
         internal bool RemoveFromSubgroups(object item)
         {
-            return this.RemoveFromSubgroups(item, this, 0);
+            return RemoveFromSubgroups(item, this, 0);
         }
 
         /// <summary>
@@ -292,7 +292,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="item">Item to remove</param>
         internal void RemoveItemFromSubgroupsByExhaustiveSearch(object item)
         {
-            this.RemoveItemFromSubgroupsByExhaustiveSearch(this, item);
+            RemoveItemFromSubgroupsByExhaustiveSearch(this, item);
         }
 
         /// <summary>
@@ -303,20 +303,20 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="loading">Whether we are currently loading</param>
         internal void RemoveSpecialItem(int index, object item, bool loading)
         {
-            Debug.Assert(Object.Equals(item, ProtectedItems[index]), "RemoveSpecialItem finds inconsistent data");
+            Debug.Assert(Equals(item, ProtectedItems[index]), "RemoveSpecialItem finds inconsistent data");
             int globalIndex = -1;
 
             if (!loading)
             {
-                globalIndex = this.LeafIndexFromItem(item, index);
+                globalIndex = LeafIndexFromItem(item, index);
             }
 
-            this.ChangeCounts(item, -1);
-            this.ProtectedItems.RemoveAt(index);
+            ChangeCounts(item, -1);
+            ProtectedItems.RemoveAt(index);
 
             if (!loading)
             {
-                this.OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item, globalIndex));
+                OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item, globalIndex));
             }
         }
 
@@ -341,7 +341,7 @@ namespace Twainsoft.PagedCollectionView.Data
         private void AddToSubgroup(object item, CollectionViewGroupInternal group, int level, object name, bool loading)
         {
             CollectionViewGroupInternal subgroup;
-            int index = (this._isDataInGroupOrder) ? group.LastIndex : 0;
+            int index = (_isDataInGroupOrder) ? group.LastIndex : 0;
 
             // find the desired subgroup
             for (int n = group.Items.Count; index < n; ++index)
@@ -355,14 +355,14 @@ namespace Twainsoft.PagedCollectionView.Data
                 if (group.GroupBy.NamesMatch(subgroup.Name, name))
                 {
                     group.LastIndex = index;
-                    this.AddToSubgroups(item, subgroup, level + 1, loading);
+                    AddToSubgroups(item, subgroup, level + 1, loading);
                     return;
                 }
             }
 
             // the item didn't match any subgroups.  Create a new subgroup and add the item.
             subgroup = new CollectionViewGroupInternal(name, group);
-            this.InitializeGroup(subgroup, level + 1, item);
+            InitializeGroup(subgroup, level + 1, item);
 
 
             if (loading)
@@ -375,10 +375,10 @@ namespace Twainsoft.PagedCollectionView.Data
                 // using insert will find the correct sort index to
                 // place the subgroup, and will default to the last
                 // position if no ActiveComparer is specified
-                group.Insert(subgroup, item, this.ActiveComparer);
+                group.Insert(subgroup, item, ActiveComparer);
             }
 
-            this.AddToSubgroups(item, subgroup, level + 1, loading);
+            AddToSubgroups(item, subgroup, level + 1, loading);
         }
 
         /// <summary>
@@ -390,7 +390,7 @@ namespace Twainsoft.PagedCollectionView.Data
         /// <param name="loading">Whether we are currently loading</param>
         private void AddToSubgroups(object item, CollectionViewGroupInternal group, int level, bool loading)
         {
-            object name = this.GetGroupName(item, group.GroupBy, level);
+            object name = GetGroupName(item, group.GroupBy, level);
             ICollection nameList;
 
             if (name == UseAsItemDirectly)
@@ -402,22 +402,22 @@ namespace Twainsoft.PagedCollectionView.Data
                 }
                 else
                 {
-                    int localIndex = group.Insert(item, item, this.ActiveComparer);
+                    int localIndex = group.Insert(item, item, ActiveComparer);
                     int index = group.LeafIndexFromItem(item, localIndex);
-                    this.OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item, index));
+                    OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item, index));
                 }
             }
             else if ((nameList = name as ICollection) == null)
             {
                 // the item belongs to one subgroup
-                this.AddToSubgroup(item, group, level, name, loading);
+                AddToSubgroup(item, group, level, name, loading);
             }
             else
             {
                 // the item belongs to multiple subgroups
                 foreach (object o in nameList)
                 {
-                    this.AddToSubgroup(item, group, level, o, loading);
+                    AddToSubgroup(item, group, level, o, loading);
                 }
             }
         }
@@ -436,14 +436,14 @@ namespace Twainsoft.PagedCollectionView.Data
                 group = null;
             }
 
-            if (result == null && this.GroupBySelector != null)
+            if (result == null && GroupBySelector != null)
             {
-                result = this.GroupBySelector(group, level);
+                result = GroupBySelector(group, level);
             }
 
-            if (result == null && level < this.GroupDescriptions.Count)
+            if (result == null && level < GroupDescriptions.Count)
             {
-                result = this.GroupDescriptions[level];
+                result = GroupDescriptions[level];
             }
 
             return result;
@@ -460,7 +460,7 @@ namespace Twainsoft.PagedCollectionView.Data
         {
             if (groupDescription != null)
             {
-                return groupDescription.GroupNameFromItem(item, level, this.Culture);
+                return groupDescription.GroupNameFromItem(item, level, Culture);
             }
             else
             {
@@ -477,7 +477,7 @@ namespace Twainsoft.PagedCollectionView.Data
         private void InitializeGroup(CollectionViewGroupInternal group, int level, object seedItem)
         {
             // set the group description for dividing the group into subgroups
-            GroupDescription groupDescription = this.GetGroupDescription(group, level);
+            GroupDescription groupDescription = GetGroupDescription(group, level);
             group.GroupBy = groupDescription;
 
             // create subgroups for each of the explicit names
@@ -488,7 +488,7 @@ namespace Twainsoft.PagedCollectionView.Data
                 for (int k = 0, n = explicitNames.Count; k < n; ++k)
                 {
                     CollectionViewGroupInternal subgroup = new CollectionViewGroupInternal(explicitNames[k], group);
-                    this.InitializeGroup(subgroup, level + 1, seedItem);
+                    InitializeGroup(subgroup, level + 1, seedItem);
                     group.Add(subgroup);
                 }
             }
@@ -507,7 +507,7 @@ namespace Twainsoft.PagedCollectionView.Data
             int leafIndex = group.Remove(item, true);
             if (leafIndex >= 0)
             {
-                this.OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item, leafIndex));
+                OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, item, leafIndex));
                 return false;
             }
             else
@@ -540,7 +540,7 @@ namespace Twainsoft.PagedCollectionView.Data
 
                 if (group.GroupBy.NamesMatch(subgroup.Name, name))
                 {
-                    if (this.RemoveFromSubgroups(item, subgroup, level + 1))
+                    if (RemoveFromSubgroups(item, subgroup, level + 1))
                     {
                         itemIsMissing = true;
                     }
@@ -563,18 +563,18 @@ namespace Twainsoft.PagedCollectionView.Data
         private bool RemoveFromSubgroups(object item, CollectionViewGroupInternal group, int level)
         {
             bool itemIsMissing = false;
-            object name = this.GetGroupName(item, group.GroupBy, level);
+            object name = GetGroupName(item, group.GroupBy, level);
             ICollection nameList;
 
             if (name == UseAsItemDirectly)
             {
                 // the item belongs to the group itself (not to any subgroups)
-                itemIsMissing = this.RemoveFromGroupDirectly(group, item);
+                itemIsMissing = RemoveFromGroupDirectly(group, item);
             }
             else if ((nameList = name as ICollection) == null)
             {
                 // the item belongs to one subgroup
-                if (this.RemoveFromSubgroup(item, group, level, name))
+                if (RemoveFromSubgroup(item, group, level, name))
                 {
                     itemIsMissing = true;
                 }
@@ -584,7 +584,7 @@ namespace Twainsoft.PagedCollectionView.Data
                 // the item belongs to multiple subgroups
                 foreach (object o in nameList)
                 {
-                    if (this.RemoveFromSubgroup(item, group, level, o))
+                    if (RemoveFromSubgroup(item, group, level, o))
                     {
                         itemIsMissing = true;
                     }
@@ -608,7 +608,7 @@ namespace Twainsoft.PagedCollectionView.Data
             // try to remove the item from the direct children 
             // this function only returns true if it failed to remove from group directly
             // in which case we will step through and search exhaustively
-            if (this.RemoveFromGroupDirectly(group, item))
+            if (RemoveFromGroupDirectly(group, item))
             {
                 // if that didn't work, recurse into each subgroup
                 // (loop runs backwards in case an entire group is deleted)
@@ -617,7 +617,7 @@ namespace Twainsoft.PagedCollectionView.Data
                     CollectionViewGroupInternal subgroup = group.Items[k] as CollectionViewGroupInternal;
                     if (subgroup != null)
                     {
-                        this.RemoveItemFromSubgroupsByExhaustiveSearch(subgroup, item);
+                        RemoveItemFromSubgroupsByExhaustiveSearch(subgroup, item);
                     }
                 }
             }
@@ -652,7 +652,7 @@ namespace Twainsoft.PagedCollectionView.Data
             /// <param name="level">The level of grouping</param>
             /// <param name="culture">Culture used for sorting</param>
             /// <returns>We do not return a value here</returns>
-            public override object GroupNameFromItem(object item, int level, System.Globalization.CultureInfo culture)
+            public override object GroupNameFromItem(object item, int level, CultureInfo culture)
             {
                 Debug.Assert(true, "We have to implement this abstract method, but it should never be called");
                 return null;

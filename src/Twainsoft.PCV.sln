@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Twainsoft.PagedCollectionView", "Twainsoft.PagedCollectionView\Twainsoft.PagedCollectionView.csproj", "{68C012B2-ECEA-4A42-AB67-9F0E12AFE78C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Twainsoft.PCV", "Twainsoft.PCV\Twainsoft.PCV.csproj", "{68C012B2-ECEA-4A42-AB67-9F0E12AFE78C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Twainsoft.PagedCollectionView.Tests", "Twainsoft.PagedCollectionView.Tests\Twainsoft.PagedCollectionView.Tests.csproj", "{488B2FEB-A526-4755-85D6-7E861BEFD89F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Twainsoft.PCV.Tests", "Twainsoft.PCV.Tests\Twainsoft.PCV.Tests.csproj", "{488B2FEB-A526-4755-85D6-7E861BEFD89F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
