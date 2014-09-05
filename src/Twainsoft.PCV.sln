@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Twainsoft.PCV", "Twainsoft.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Twainsoft.PCV.Tests", "Twainsoft.PCV.Tests\Twainsoft.PCV.Tests.csproj", "{488B2FEB-A526-4755-85D6-7E861BEFD89F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Twainsoft.PCV.WPF.TestApplication", "Twainsoft.PCV.WPF.TestApplication\Twainsoft.PCV.WPF.TestApplication.csproj", "{B953CB3E-5F88-4388-B13A-3AF474218063}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{488B2FEB-A526-4755-85D6-7E861BEFD89F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{488B2FEB-A526-4755-85D6-7E861BEFD89F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{488B2FEB-A526-4755-85D6-7E861BEFD89F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B953CB3E-5F88-4388-B13A-3AF474218063}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B953CB3E-5F88-4388-B13A-3AF474218063}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B953CB3E-5F88-4388-B13A-3AF474218063}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B953CB3E-5F88-4388-B13A-3AF474218063}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
