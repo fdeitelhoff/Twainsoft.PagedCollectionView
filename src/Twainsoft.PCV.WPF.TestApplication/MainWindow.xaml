@@ -5,12 +5,13 @@
     <DockPanel>
         <ToolBarTray DockPanel.Dock="Top">
             <ToolBar Band="1" BandIndex="1">
-                <Button>
-                    Bla
-                </Button>
-                <Button>
-                    Bla 2
-                </Button>
+                <Label Content="Filter:"/>
+                <TextBox Width="100" />
+                <Button Content="Search" Click="SearchOnClick"/>
+                <Button Content="&lt;&lt;" Click="FirstPageOnClick"/>
+                <Button Content="&lt;" Click="PreviousPageOnClick"/>
+                <Button Content="&gt;" Click="NextPageOnClick"/>
+                <Button Content="&gt;&gt;" Click="LastPageOnClick"/>
             </ToolBar>
         </ToolBarTray>
         <DataGrid Name="DataGrid" x:FieldModifier="private" AutoGenerateColumns="True">
