@@ -4,9 +4,8 @@
         Title="MainWindow" Height="350" Width="525">
     <DockPanel>
         <ToolBarTray DockPanel.Dock="Top">
-            <ToolBar Band="1" BandIndex="1">
-                <Label Content="Filter:"/>
-                <TextBox Width="100" />
+            <ToolBar Band="1" BandIndex="1" ToolBarTray.IsLocked="True">
+                <TextBox Width="100" Name="Search" x:FieldModifier="private" />
                 <Button Content="Search" Click="SearchOnClick"/>
                 <Button Content="&lt;&lt;" Click="FirstPageOnClick"/>
                 <Button Content="&lt;" Click="PreviousPageOnClick"/>
